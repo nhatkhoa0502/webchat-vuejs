@@ -22,12 +22,12 @@
         <div class="mt-5 d-grid">
           <button
             @click="resetPassword"
-            class="btn btn-lg btn-outline-primary btn-block"
+            class="btn btn-lg btn-primary btn-block"
           >
             <v-progress-circular
               v-if="loading"
               indeterminate
-              color="dark"
+              color="white"
             ></v-progress-circular>
             Submit
           </button>

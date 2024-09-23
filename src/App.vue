@@ -1,12 +1,12 @@
 <template>
   <v-app>
-    <NavigationDrawer v-if="isAuthenticated" />
+    <NavigationDrawer v-if="user" />
     <v-main>
       <router-view />
     </v-main>
-    <v-footer app>
-      <span>{{ user }}</span>
-    </v-footer>
+    <!-- <v-footer app>
+      <span>footer ở đây</span>
+    </v-footer> -->
   </v-app>
 </template>
 <script setup>
@@ -20,7 +20,6 @@ import { useStore } from "vuex";
 // import router from "@/router";
 
 const store = useStore();
-const isAuthenticated = computed(() => store.getters.isAuthenticated);
 const user = computed(() => store.getters.getUser);
 
 // onMounted(async () => {

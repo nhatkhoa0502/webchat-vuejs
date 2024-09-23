@@ -82,13 +82,13 @@
         <div class="mt-3 d-grid">
           <button
             @click="handleRegister"
-            class="btn btn-lg btn-outline-primary btn-block"
+            class="btn btn-lg btn-primary btn-block"
           >
             <!-- Spinner -->
             <v-progress-circular
               v-if="loading"
               indeterminate
-              color="dark"
+              color="white"
             ></v-progress-circular>
             Register
           </button>
@@ -115,7 +115,7 @@ import {
   signOut,
 } from "firebase/auth";
 import { showSuccessAlert, showErrorAlert } from "../utils/notification";
-import router from "@/router";
+import { getDatabase, ref as dbRef, set } from "firebase/database";
 
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
@@ -156,8 +156,16 @@ const handleRegister = async () => {
     );
     console.log("Register Successfully!", user);
 
+    const db = getDatabase();
+    set(dbRef(db, "users/" + user.uid), {
+      uid: user.uid,
+      email: user.email,
+      displayName: displayName.value,
+      avatar:
+        "https://firebasestorage.googleapis.com/v0/b/webchat-24af1.appspot.com/o/avatar-user%2Fuser-profile-icon-free-vector.jpg?alt=media&token=d75dc0a3-8183-4d22-a4a8-07b9f4599487",
+    });
+
     await signOut(auth);
-    router.push("/login");
   } catch (error) {
     showErrorAlert("Register Fail!\n" + error.message);
   } finally {

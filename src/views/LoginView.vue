@@ -50,14 +50,11 @@
 
         <!-- btn login email/password -->
         <div class="mt-3 d-grid">
-          <button
-            @click="handleLogin"
-            class="btn btn-lg btn-outline-primary btn-block"
-          >
+          <button @click="handleLogin" class="btn btn-lg btn-primary btn-block">
             <v-progress-circular
               v-if="loading"
               indeterminate
-              color="dark"
+              color="white"
             ></v-progress-circular>
             Login
           </button>

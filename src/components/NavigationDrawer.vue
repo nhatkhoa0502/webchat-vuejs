@@ -7,7 +7,7 @@
     app
   >
     <!-- header -->
-    <v-list-item :prepend-avatar="avatar" :title="username" nav>
+    <v-list-item :prepend-avatar="avatar" :title="displayName" nav>
       <template v-slot:append>
         <v-btn
           icon="mdi-chevron-left"
@@ -63,19 +63,53 @@ import { getAuth, signOut } from "firebase/auth";
 import router from "@/router";
 import { showSuccessAlert, showErrorAlert } from "../utils/notification";
 import { useStore } from "vuex";
+import { getDatabase, ref as dbRef, get, child } from "firebase/database";
 
 const drawer = ref(true);
 const rail = ref(true);
 
+const displayName = ref("Display Name");
+const avatar = ref("favicon.ico");
+
+const getUserData = async (uid) => {
+  try {
+    const db = getDatabase();
+    const dbReference = dbRef(db); // Tham chiếu tới gốc của database
+
+    // Lấy dữ liệu từ đường dẫn 'users/' + uid
+    const snapshot = await get(child(dbReference, `users/${uid}`));
+
+    if (snapshot.exists()) {
+      // Nếu dữ liệu tồn tại
+      const userData = snapshot.val();
+      console.log("User data:", userData);
+      return userData;
+    } else {
+      console.log("No data available for this user.");
+      return null;
+    }
+  } catch (error) {
+    console.error("Error getting user data:", error);
+    return null;
+  }
+};
+
 const store = useStore();
 const user = computed(() => store.getters.getUser);
-const username = ref(user.value.displayName);
-const avatar = ref(user.value.photoURL);
 
-console.log(user.value.userName);
+getUserData(user.value.uid)
+  .then((userData) => {
+    if (userData) {
+      displayName.value = userData.displayName || "Display Name";
+      avatar.value = userData.avatar || "favicon.ico";
+    }
+  })
+  .catch((error) => {
+    console.error("Error fetching user data:", error);
+  });
 
-const auth = getAuth();
 const handleLogout = async () => {
+  const auth = getAuth();
   try {
     await signOut(auth);
     showSuccessAlert("User signed out successfully");

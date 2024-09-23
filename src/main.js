@@ -15,6 +15,8 @@ const firebaseConfig = {
   messagingSenderId: "510253615526",
   appId: "1:510253615526:web:28d1fba686351388726767",
   measurementId: "G-EKN9R2MWM1",
+  databaseURL:
+    "https://webchat-24af1-default-rtdb.asia-southeast1.firebasedatabase.app",
 };
 
 // Khởi tạo Firebase
