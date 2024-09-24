@@ -42,9 +42,9 @@
       ></v-list-item>
       <v-list-item
         prepend-icon="mdi-account"
-        title="My Account"
-        value="my-account"
-        to="/my-account"
+        title="Profile"
+        value="profile"
+        to="/profile"
       ></v-list-item>
       <v-list-item
         id="logout-item"

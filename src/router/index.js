@@ -4,7 +4,7 @@ import LoginView from "../views/LoginView.vue";
 import HomeView from "../views/HomeView.vue";
 import ChatsView from "../views/ChatsView.vue";
 import FriendsView from "../views/FriendsView.vue";
-import MyAccountView from "../views/MyAccountView.vue";
+import Profile from "../views/ProfileView.vue";
 import UsersView from "../views/UsersView.vue";
 import ForgotPasswordView from "../views/ForgotPasswordView.vue";
 // import { useStore } from "vuex";
@@ -31,8 +31,8 @@ const routes = [
     // meta: { requiresAuth: true },
   },
   {
-    path: "/my-account",
-    component: MyAccountView,
+    path: "/profile",
+    component: Profile,
     // meta: { requiresAuth: true },
   },
   {
