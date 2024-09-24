@@ -46,9 +46,12 @@
 </template>
 <script setup>
 import { ref } from "vue";
-import { showInfoAlert } from "../utils/notification";
 import { getAuth, sendPasswordResetEmail } from "firebase/auth";
-import { showSuccessAlert, showErrorAlert } from "../utils/notification";
+import {
+  showSuccessAlert,
+  showErrorAlert,
+  showInfoAlert,
+} from "../utils/notification";
 import router from "@/router";
 
 const email = ref("");
