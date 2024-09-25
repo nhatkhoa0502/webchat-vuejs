@@ -67,9 +67,22 @@ import { getDatabase, ref as dbRef, get, child } from "firebase/database";
 
 const drawer = ref(true);
 const rail = ref(true);
-
 const displayName = ref("Display Name");
 const avatar = ref("favicon.ico");
+const store = useStore();
+const user = computed(() => store.getters.getUser);
+
+const handleLogout = async () => {
+  const auth = getAuth();
+  try {
+    await signOut(auth);
+    showSuccessAlert("User signed out successfully");
+    router.push("/login");
+  } catch (error) {
+    showErrorAlert("Error signing out");
+    console.error("Error signing out:", error);
+  }
+};
 
 const getUserData = async (uid) => {
   try {
@@ -94,9 +107,6 @@ const getUserData = async (uid) => {
   }
 };
 
-const store = useStore();
-const user = computed(() => store.getters.getUser);
-
 getUserData(user.value.uid)
   .then((userData) => {
     if (userData) {
@@ -107,18 +117,6 @@ getUserData(user.value.uid)
   .catch((error) => {
     console.error("Error fetching user data:", error);
   });
-
-const handleLogout = async () => {
-  const auth = getAuth();
-  try {
-    await signOut(auth);
-    showSuccessAlert("User signed out successfully");
-    router.push("/login");
-  } catch (error) {
-    showErrorAlert("Error signing out");
-    console.error("Error signing out:", error);
-  }
-};
 </script>
 
 <style scoped>

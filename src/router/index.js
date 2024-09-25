@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import RegisterView from "../views/RegisterView.vue";
 import LoginView from "../views/LoginView.vue";
-import HomeView from "../views/HomeView.vue";
 import ChatsView from "../views/ChatsView.vue";
 import FriendsView from "../views/FriendsView.vue";
 import Profile from "../views/ProfileView.vue";
@@ -12,41 +11,38 @@ import ForgotPasswordView from "../views/ForgotPasswordView.vue";
 
 const routes = [
   {
-    path: "/",
-    component: HomeView,
-    // meta: { requiresAuth: true },
-  },
-  {
-    path: "/forgot-password",
-    component: ForgotPasswordView,
-  },
-  {
     path: "/chats",
     component: ChatsView,
-    // meta: { requiresAuth: true },
   },
   {
     path: "/friends",
     component: FriendsView,
-    // meta: { requiresAuth: true },
   },
   {
     path: "/profile",
     component: Profile,
-    // meta: { requiresAuth: true },
   },
   {
     path: "/users",
     component: UsersView,
-    // meta: { requiresAuth: true },
+  },
+  {
+    path: "/forgot-password",
+    components: {
+      unAuthenticated: ForgotPasswordView,
+    },
   },
   {
     path: "/register",
-    component: RegisterView,
+    components: {
+      unAuthenticated: RegisterView,
+    },
   },
   {
     path: "/login",
-    component: LoginView,
+    components: {
+      unAuthenticated: LoginView,
+    },
   },
 ];
 

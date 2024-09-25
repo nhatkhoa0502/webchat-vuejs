@@ -34,7 +34,7 @@ onAuthStateChanged(auth, (user) => {
   if (user) {
     // User is signed in, you can save user data if needed
     store.dispatch("login", user);
-    router.push("/");
+    router.push("/profile");
     console.log("User login");
   } else {
     // User is signed out

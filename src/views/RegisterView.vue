@@ -163,6 +163,9 @@ const handleRegister = async () => {
       displayName: displayName.value,
       avatar:
         "https://firebasestorage.googleapis.com/v0/b/webchat-24af1.appspot.com/o/avatar-user%2Fuser-profile-icon-free-vector.jpg?alt=media&token=d75dc0a3-8183-4d22-a4a8-07b9f4599487",
+      gender: "",
+      phone: "",
+      address: "",
     });
 
     await signOut(auth);

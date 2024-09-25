@@ -1,12 +1,17 @@
 <template>
   <v-app>
+    <!-- NavigationDrawer Chỉ hiện thị khi người dùng đã đăng nhập -->
     <NavigationDrawer v-if="user" />
-    <v-main>
+
+    <!-- Router-view cho người dùng đã đăng nhập -->
+    <v-main v-if="user">
       <router-view />
     </v-main>
-    <!-- <v-footer app>
-      <span>footer ở đây</span>
-    </v-footer> -->
+
+    <!-- Router-view cho người dùng chưa đăng nhập -->
+    <v-main v-else>
+      <router-view name="unAuthenticated" />
+    </v-main>
   </v-app>
 </template>
 <script setup>
