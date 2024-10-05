@@ -3,7 +3,7 @@
         <img v-show="isCurrentUser == false" :src="props.avatarUrl" class="rounded-circle me-2" width="30" height="30" alt="Avatar">
         <div :class="[' rounded p-2 max-width-70', props.isCurrentUser ? 'bg-primary text-white' : 'bg-secondary-subtle']">
             <p class="mb-0">{{ content }}</p>
-            <small :class="[isCurrentUser ? 'text-white-50' : 'text-muted']">{{timestamp}}</small>
+            <small :class="[isCurrentUser ? 'text-white-50' : 'text-muted']">{{formattedTime}}</small>
             
         </div>
         <!-- <small v-if="isCurrentUser && seen" class="d-block text-muted">Seen</small> -->
@@ -18,16 +18,15 @@ const props = defineProps({
     sender: String,
     type: String,
     content: String,
-    timestamp: String,
     avatarUrl: String,
     isCurrentUser: Boolean,
+    timestamp: String,
 })
 
-// const dateSent= computed(()=> new Date(props.timestamp).toTimeString())
+const formattedTime = computed(() => {
+    const date = new Date(props.timestamp);
+    return date.toLocaleString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+});
 
-onMounted(() => {
-
-    console.log(props.avatarUrl)
-})
 
 </script>

@@ -1,29 +1,24 @@
 <template>
-    <!-- <div :class="['message mb-3 d-flex', isCurrentUser ? 'justify-content-end' : 'justify-content-start']">
-        <a :href="fileUrl" target="_blank" class="btn btn-outline-primary">
-            <i class="bi bi-file-earmark"></i> {{ fileName }}
-        </a>
-        <small v-if="sender === currentUser && seen" class="d-block text-muted">Seen</small>
-    </div> -->
-
-    <div class="file-message p-3 bg-light rounded">
-        <div class="d-flex align-items-center">
-            <div class="file-icon me-3">
-                <i class="bi" :class="fileIconClass"></i>
+    <div :class="['file-message card shadow-sm mb-3', isCurrentUser ? 'ms-auto' : 'me-auto']">
+        <div class="card-body p-3">
+            <div class="d-flex align-items-center">
+                <div class="file-icon me-3">
+                    <i class="bi" :class="[fileIconClass, 'display-4 text-primary']"></i>
+                </div>
+                <div class="file-info flex-grow-1">
+                    <h6 class="mb-1 text-truncate fw-bold">{{ fileName }}</h6>
+                    <p class="mb-0 text-muted small">{{ formattedSize }}</p>
+                </div>
+                <div class="file-actions ms-2">
+                    <button @click="downloadFile" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-download me-1"></i>Download
+                    </button>
+                </div>
             </div>
-            <div class="file-info flex-grow-1">
-                <h6 class="mb-0 text-truncate">{{ fileName }}</h6>
-                <small class="text-muted">{{ formattedSize }}</small>
+            <div class="mt-2 d-flex justify-content-between align-items-center border-top pt-2">
+                <small class="text-muted">{{ formattedTime }}</small>
+                <!-- <span v-if="sender === currentUser && seen" class="text-muted small">Seen</span> -->
             </div>
-            <div class="file-actions">
-                <button @click="downloadFile" class="btn btn-sm btn-primary">
-                    <i class="bi bi-download me-1"></i>Download
-                </button>
-            </div>
-        </div>
-        <div class="mt-2 d-flex justify-content-between align-items-center">
-            <small class="text-muted">{{ formattedTime }}</small>
-            <span v-if="sender === currentUser && seen" class="text-muted small">Seen</span>
         </div>
     </div>
 </template>
@@ -61,7 +56,6 @@ const fileIconClass = computed(() => {
 });
 
 
-
 const formattedSize = computed(() => {
     const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
     if (props.fileSize === 0) return '0 Byte';
@@ -85,7 +79,8 @@ const downloadFile = () => {
 
 <style scoped>
 .file-message {
-  max-width: 300px;
+  max-width: 400px;
+  width: 100%;
 }
 
 .file-icon i {

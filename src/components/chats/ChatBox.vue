@@ -31,17 +31,10 @@
             <div class="card">
                 <div class="card-header">
                     <div class="feature-buttons">
-                        <button @click="sendImage" class="btn btn-outline-primary btn-sm me-2 bounce-btn">
-                            <i class="bi bi-image"></i>
-                        </button>
-                        <!-- <button @click="sendFile" class="btn btn-outline-primary btn-sm me-2 bounce-btn">
-                            <i class="bi bi-paperclip"></i>
-                        </button> -->
-
                         <input type="file" ref="fileInput" @change="handleFileUpload" style="display: none"
                             accept="image/*,video/*,.pdf,.doc,.docx,.txt">
-                        <button @click="triggerFileUpload" class="btn btn-outline-secondary btn-sm me-2">
-                            <i class="bi bi-file-earmark"></i>
+                        <button @click="triggerFileUpload" class="btn btn-outline-primary btn-sm me-2">
+                            <i class="bi bi-paperclip"></i>
                         </button>
                         <button @click="sendAudio" class="btn btn-outline-primary btn-sm me-2 bounce-btn">
                             <i class="bi bi-mic"></i>
@@ -139,9 +132,11 @@ const handleFileUpload = async (event) => {
     console.log("downloadurl: " + downloadURL)
     let messageData = {
         sender: mCurrentUser.value.uid,
-        type: 'file',
+        type: '',
         fileUrl: downloadURL,
         fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
         timestamp: serverTimestamp(),
     };
 
@@ -152,12 +147,10 @@ const handleFileUpload = async (event) => {
     }
     else {
         messageData.type = 'file';
-        messageData.fileType = file.type;
-        messageData.fileSize = file.size;
+    }
 
+    sendMediaMessage(messageData);
 
-        sendMediaMessage(messageData);
-    };
 }
 
 const sendMediaMessage = async (messageData) => {
@@ -288,18 +281,5 @@ const sendMessage = async () => {
     }
 }
 
-function sendFile() {
-    // Implement file sending logic
-}
 
-function sendImage() {
-    // Implement image sending logic
-}
-
-function sendAudio() {
-    // Implement audio sending logic
-}
-function sendEmoji() {
-    // Implement emoji sending logic
-}
 </script>
