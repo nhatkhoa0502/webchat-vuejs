@@ -1,17 +1,17 @@
 <template>
-    <div :class="['file-message card shadow-sm mb-3', isCurrentUser ? 'ms-auto' : 'me-auto']">
+    <div :class="['file-message card shadow-sm mb-3', isCurrentUser ? 'ms-auto' : 'me-auto']" class="cursor-pointer">
         <div class="card-body p-3">
             <div class="d-flex align-items-center">
                 <div class="file-icon me-3">
                     <i class="bi" :class="[fileIconClass, 'display-4 text-primary']"></i>
                 </div>
                 <div class="file-info flex-grow-1">
-                    <h6 class="mb-1 text-truncate fw-bold">{{ fileName }}</h6>
+                    <h6 class="mb-1 fw-bold ">{{ fileName }}</h6>
                     <p class="mb-0 text-muted small">{{ formattedSize }}</p>
                 </div>
                 <div class="file-actions ms-2">
                     <button @click="downloadFile" class="btn btn-outline-primary btn-sm">
-                        <i class="bi bi-download me-1"></i>Download
+                        <i class="bi bi-download "></i>
                     </button>
                 </div>
             </div>
@@ -43,7 +43,7 @@ const props = defineProps({
 
 const fileIconClass = computed(() => {
     const iconMap = {
-        'pdf': 'bi-file-earmark-pdf',
+        'pdf': 'bi-file-earmark-pdf ',
         'doc': 'bi-file-earmark-word',
         'xls': 'bi-file-earmark-excel',
         'jpg': 'bi-file-earmark-image',
@@ -64,8 +64,7 @@ const formattedSize = computed(() => {
 });
 
 const formattedTime = computed(() => {
-    const date = new Date(props.timestamp);
-    return date.toLocaleString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+    return new Date(props.timestamp).toLocaleString();
 });
 
 const downloadFile = () => {
@@ -79,7 +78,7 @@ const downloadFile = () => {
 
 <style scoped>
 .file-message {
-  max-width: 400px;
+  max-width: 350px;
   width: 100%;
 }
 

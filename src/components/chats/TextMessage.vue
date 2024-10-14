@@ -24,8 +24,7 @@ const props = defineProps({
 })
 
 const formattedTime = computed(() => {
-    const date = new Date(props.timestamp);
-    return date.toLocaleString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+    return new Date(props.timestamp).toLocaleString();
 });
 
 

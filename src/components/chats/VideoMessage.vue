@@ -1,26 +1,18 @@
 <template>
-    <div :class="['message mb-3 d-flex', isCurrentUser ? 'justify-content-end' : 'justify-content-start']">
-        <div :class="['video-container', isCurrentUser ? 'ml-auto' : 'mr-auto']">
-            <video 
-                :src="fileUrl" 
-                :type="videoType" 
-                class="rounded" 
-                style="max-width: 300px; max-height: 200px; cursor: pointer;"
-                @click="openFullVideo"
-                controls
-                preload="metadata"
-            ></video>
-            <small class="d-block text-muted mt-1">{{ fileName }} ({{ formattedSize }})</small>
+    <div :class="['file-message card shadow-sm mb-3', isCurrentUser ? 'ms-auto' : 'me-auto']" class="">
+        <div class="ratio ratio-16x9">
+            <video :src="fileUrl" :type="videoType" class="rounded-top" controls preload="metadata"></video>
         </div>
+        <span class="badge bottom-0 end-0 m-2 text-bg-secondary">{{ formattedTime }}</span>
     </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, defineProps } from 'vue';
 
 const props = defineProps({
     key: String,
-    
+
     sender: String,
     type: String,
     fileUrl: String,
@@ -29,7 +21,6 @@ const props = defineProps({
     fileName: String,
     timestamp: String,
 
-
     isCurrentUser: Boolean,
 });
 
@@ -37,20 +28,20 @@ const videoType = computed(() => {
     return props.fileType || 'video/mp4';
 });
 
-const formattedSize = computed(() => {
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-    if (props.fileSize === 0) return '0 Byte';
-    const i = parseInt(Math.floor(Math.log(props.fileSize) / Math.log(1024)));
-    return Math.round(props.fileSize / Math.pow(1024, i), 2) + ' ' + sizes[i];
+const formattedTime = computed(() => {
+    return new Date(props.timestamp).toLocaleString();
 });
 
-const openFullVideo = () => {
-    window.open(props.fileUrl, '_blank');
-};
+
 </script>
 
 <style scoped>
-.video-container {
-    max-width: 70%;
+.file-message {
+    max-width: 350px;
+    width: 100%;
+}
+
+.badge {
+    opacity: 0.6;
 }
 </style>

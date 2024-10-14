@@ -13,7 +13,6 @@
             <div>
                 <button class="btn btn-outline-primary me-2 bounce-btn"><i class="bi bi-search"></i></button>
                 <button class="btn btn-outline-primary me-2 bounce-btn"><i class="bi bi-telephone"></i></button>
-                <button class="btn btn-outline-primary me-2 bounce-btn"><i class="bi bi-camera-video"></i></button>
                 <button class="btn btn-outline-secondary bounce-btn"><i class="bi bi-info-circle"></i></button>
             </div>
         </div>
@@ -21,24 +20,29 @@
         <div ref="messageListRef" class="message-list flex-grow-1 overflow-auto p-3">
             <component v-for="message in messages" :key="message.key" :is="getMessageComponent(message.type)"
                 v-bind="message" :isCurrentUser="message.sender == mCurrentUser.uid"></component>
-
-            <!-- <TextMessage :isCurrentUser="false" :avatarUrl="require('@/assets/logo.png')" content="hello cu" /> -->
-            <!-- <TextMessage :isCurrentUser="true"  :avatarUrl="require('@/assets/logo.png')" content="lo cc"/> -->
         </div>
 
         <!-- footer chatbox (chat input) -->
         <div class="message-input bg-light">
             <div class="card">
                 <div class="card-header">
-                    <div class="feature-buttons">
+                    <div class="feature-buttons d-flex align-items-center">
                         <input type="file" ref="fileInput" @change="handleFileUpload" style="display: none"
                             accept="image/*,video/*,.pdf,.doc,.docx,.txt">
                         <button @click="triggerFileUpload" class="btn btn-outline-primary btn-sm me-2">
                             <i class="bi bi-paperclip"></i>
                         </button>
-                        <button @click="sendAudio" class="btn btn-outline-primary btn-sm me-2 bounce-btn">
-                            <i class="bi bi-mic"></i>
+                        <button @click="isRecording ? stopRecording() : startRecording()"
+                            class="btn btn-outline-primary btn-sm me-2 bounce-btn">
+                            <i class="bi" :class="isRecording ? 'bi-stop-circle' : 'bi-mic'"></i>
                         </button>
+                        <!-- Recording indicator -->
+                        <div v-if="isRecording" class="recording-indicator d-flex align-items-center ms-2">
+                            <span class="badge bg-danger me-2">Recording</span>
+                            <div class="spinner-grow spinner-grow-sm text-danger" role="status">
+                                <span class="visually-hidden">Recording...</span>
+                            </div>
+                        </div>
                         <button @click="sendEmoji" class="btn btn-outline-primary btn-sm bounce-btn">
                             <i class="bi bi-emoji-smile"></i>
                         </button>
@@ -63,6 +67,7 @@ import TextMessage from './TextMessage.vue'
 import ImageMessage from './ImageMessage.vue'
 import VideoMessage from './VideoMessage.vue'
 import FileMessage from './FileMessage.vue'
+import AudioMessage from './AudioMessage.vue'
 // import SoundMessage from './SoundMessage.vue'
 import { ref, computed, defineProps, onMounted, onUnmounted, watch } from "vue";
 import { useStore } from "vuex";
@@ -86,92 +91,47 @@ const newMessage = ref("");
 var mChatMessageListener = null;
 const fileInput = ref(null);
 const messageListRef = ref(null);
+const chatId = computed(() => {
+    return [mCurrentUser.value?.uid, mAnotherUser.value?.uid].sort().join('_');
+});
+const chatMessagesRef = computed(() => dbRef(db, `chatMessages/${chatId.value}`));
 
-onMounted(async () => {
+// audio recording properties
+const isRecording = ref(false);
+const audioURL = ref('');
+let mediaRecorder = null;
+let audioChunks = [];
+
+onMounted(() => {
     // Wait for the store to be initialized
     // await store.dispatch('initializeAuth');
     mCurrentUser.value = storeVuex.getters.getUser;
-
-    if (mCurrentUser.value && props.selectedUserId) {
-        mAnotherUser.value = await loadAnotherUser(props.selectedUserId);
-
-        getChatMessages(mCurrentUser.value.uid, mAnotherUser.value?.uid);
-
-    }
+    loadAnotherUserAndChatMessages(props.selectedUserId);
 });
 
 onUnmounted(() => {
-    if (mChatMessageListener) {
-        const chatId = [mCurrentUser.value?.uid, mAnotherUser.value?.uid].sort().join('_');
-        const messagesRef = dbRef(db, `chatMessages/${chatId}`);
-        off(messagesRef, 'child_added', mChatMessageListener);
-        off()
+    if (mChatMessageListener && chatMessagesRef.value) {
+        off(chatMessagesRef.value, 'child_added', mChatMessageListener);
+    }
+
+    if (mediaRecorder) {
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
     }
 });
 
 watch(() => props.selectedUserId, async (newUserId) => {
-    if (newUserId && mCurrentUser.value) {
-        mAnotherUser.value = await loadAnotherUser(props.selectedUserId);
-
-        getChatMessages(mCurrentUser.value.uid, mAnotherUser.value?.uid);
-    }
+    loadAnotherUserAndChatMessages(newUserId);
 });
 
-const triggerFileUpload = () => {
-    fileInput.value.click();
-};
-
-const handleFileUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const storage = getStorage();
-    const fileRef = storageRef(storage, `chat_files/${Date.now()}_${file.name}`);
-    await uploadBytes(fileRef, file);
-    const downloadURL = await getDownloadURL(fileRef);
-    console.log("downloadurl: " + downloadURL)
-    let messageData = {
-        sender: mCurrentUser.value.uid,
-        type: '',
-        fileUrl: downloadURL,
-        fileName: file.name,
-        fileType: file.type,
-        fileSize: file.size,
-        timestamp: serverTimestamp(),
-    };
-
-    if (file.type.startsWith('image/')) {
-        messageData.type = 'image';
-    } else if (file.type.startsWith('video/')) {
-        messageData.type = 'video';
+const loadAnotherUserAndChatMessages = async (selectedUserId) => {
+    if (mCurrentUser.value && selectedUserId) {
+        mAnotherUser.value = await loadAnotherUser(selectedUserId);
+        getChatMessages();
     }
     else {
-        messageData.type = 'file';
+        console.error("loadAnotherUserAndChatMessages: mCurrentUser or selectedUserId is null");
     }
-
-    sendMediaMessage(messageData);
-
 }
-
-const sendMediaMessage = async (messageData) => {
-
-    const chatId = [mCurrentUser.value.uid, mAnotherUser.value.uid].sort().join('_');
-    const chatMessagesRef = dbRef(db, `chatMessages/${chatId}`);
-    const newMessageRef = push(chatMessagesRef);
-
-    if (!messageData) {
-        console.error("messageData is null");
-        return;
-    }
-
-    try {
-        await set(newMessageRef, messageData);
-    } catch (error) {
-        console.error("Error sending media message:", error);
-    }
-
-
-};
 
 function getMessageComponent(type) {
     const components = {
@@ -179,7 +139,7 @@ function getMessageComponent(type) {
         image: ImageMessage,
         video: VideoMessage,
         file: FileMessage,
-        // sound: SoundMessage,
+        audio: AudioMessage,
     };
     return components[type] || TextMessage;
 }
@@ -204,14 +164,17 @@ const loadAnotherUser = async (uid) => {
     return anotherUser
 }
 
-const getChatMessages = async (currentUserId, otherUserId, limit = 50) => {
-    const chatId = [currentUserId, otherUserId].sort().join('_');
-    const messagesRef = dbRef(db, `chatMessages/${chatId}`);
-    const messagesQuery = query(messagesRef, limitToLast(limit));
+const getChatMessages = async (limit = 50) => {
+    if (!mCurrentUser.value || !mAnotherUser.value) {
+        console.error("getChatMessages: mCurrentUser or mAnotherUser is null");
+        return;
+    }
+    
+    const messagesQuery = query(chatMessagesRef.value, limitToLast(limit));
 
     // Hủy bỏ listener cũ nếu có
     if (mChatMessageListener) {
-        off(messagesRef, 'child_added', mChatMessageListener);
+        off(chatMessagesRef.value, 'child_added', mChatMessageListener);
     }
 
     // Lấy dữ liệu ban đầu
@@ -229,7 +192,7 @@ const getChatMessages = async (currentUserId, otherUserId, limit = 50) => {
         scrollToBottom();
 
         // Lắng nghe tin nhắn mới
-        mChatMessageListener = onChildAdded(messagesRef, (childSnapshot) => {
+        mChatMessageListener = onChildAdded(chatMessagesRef.value, (childSnapshot) => {
             const newMessage = {
                 key: childSnapshot.key,
                 ...childSnapshot.val()
@@ -258,10 +221,8 @@ const scrollToBottom = () => {
 };
 
 const sendMessage = async () => {
-    if (newMessage.value.trim() && mCurrentUser.value?.uid && mAnotherUser.value?.uid) {
-        const chatId = [mCurrentUser.value.uid, mAnotherUser.value.uid].sort().join('_');
-        const chatMessagesRef = dbRef(db, `chatMessages/${chatId}`);
-        const newMessageRef = push(chatMessagesRef);
+    if (newMessage.value.trim() && mCurrentUser.value && mAnotherUser.value ) {
+        const newMessageRef = push(chatMessagesRef.value);
 
         const messageData = {
             type: "text",
@@ -281,5 +242,116 @@ const sendMessage = async () => {
     }
 }
 
+const triggerFileUpload = () => {
+    fileInput.value.click();
+};
+
+const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const storage = getStorage();
+    const fileRef = storageRef(storage, `chat_files/${Date.now()}_${chatId.value}_${file.name}`);
+    await uploadBytes(fileRef, file);
+    const downloadURL = await getDownloadURL(fileRef);
+    
+    let messageData = {
+        sender: mCurrentUser.value.uid,
+        type: '',
+        fileUrl: downloadURL,
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        timestamp: serverTimestamp(),
+    };
+
+    if (file.type.startsWith('image/')) {
+        messageData.type = 'image';
+    } else if (file.type.startsWith('video/')) {
+        messageData.type = 'video';
+    }
+    else {
+        messageData.type = 'file';
+    }
+
+    sendMediaMessage(messageData);
+}
+
+const startRecording = async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.error("getUserMedia not supported on your browser!");
+        return;
+    }
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+
+        mediaRecorder.ondataavailable = (event) => {
+            audioChunks.push(event.data);
+        };
+
+        mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            audioURL.value = URL.createObjectURL(audioBlob);
+            console.log("audioURL: " + audioURL.value);
+            handleAudioUpload(audioBlob, audioURL.value);
+            audioChunks = [];
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        }; 
+
+        mediaRecorder.start();
+        isRecording.value = true;
+    } catch (error) {
+        console.error(`The following getUserMedia error occurred: ${error}`);
+    }
+
+};
+
+const stopRecording = () => {
+    if (mediaRecorder) {
+        mediaRecorder.stop();
+        isRecording.value = false;
+    }
+}
+
+const handleAudioUpload = async (audioBlob, fileName) => {
+    const storage = getStorage();
+
+    const audioRef = storageRef(storage, `chat_audios/${Date.now()}_${chatId.value}_${fileName}`);
+    await uploadBytes(audioRef, audioBlob);
+    const downloadURL = await getDownloadURL(audioRef);
+
+    let messageData = {
+        sender: mCurrentUser.value.uid,
+        type: 'audio',
+        fileUrl: downloadURL,
+        fileName: fileName,
+        fileType: audioBlob.type,
+        fileSize: audioBlob.size,
+        timestamp: serverTimestamp(),
+    };
+    sendMediaMessage(messageData);
+}
+
+const sendMediaMessage = async (messageData) => {
+    if (!mCurrentUser.value || !mAnotherUser.value) {
+        console.error("sendMediaMessage: mCurrentUser or mAnotherUser is null");
+        return;
+    }
+
+    const newMessageRef = push(chatMessagesRef.value);
+
+    if (!messageData) {
+        console.error("messageData is null");
+        return;
+    }
+
+    try {
+        await set(newMessageRef, messageData);
+    } catch (error) {
+        console.error("Error sending media message:", error);
+    }
+};
 
 </script>
