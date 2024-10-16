@@ -1,14 +1,19 @@
 <template>
-    <div :class="['file-message card shadow-sm mb-3', isCurrentUser ? 'ms-auto' : 'me-auto']" class="">
-        <div class="ratio ratio-16x9">
+    <div :class="['file-message  mb-3', isCurrentUser ? 'ms-auto' : 'me-auto']">
+        <div class="ratio ratio-16x9 shadow-lg" data-bs-toggle="tooltip" :data-bs-title="fileName"
+            data-bs-delay='{"show":"500", "hide":"200"}'>
             <video :src="fileUrl" :type="videoType" class="rounded-top" controls preload="metadata"></video>
         </div>
-        <span class="badge bottom-0 end-0 m-2 text-bg-secondary">{{ formattedTime }}</span>
+        <div
+            :class="['p-2 d-flex align-items-center', isCurrentUser ? 'justify-content-end' : 'justify-content-start']">
+            <span class="badge text-bg-secondary me-1">{{ formattedTime }}</span>
+            <small v-if="isCurrentUser && isLastMessageFromCurrentUser" class="badge text-bg-secondary">{{isSeen ? 'Seen' : 'Already Sent'}}</small>
+        </div>
     </div>
 </template>
 
 <script setup>
-import { computed, defineProps } from 'vue';
+import { computed, defineProps, onMounted } from 'vue';
 
 const props = defineProps({
     key: String,
@@ -22,6 +27,8 @@ const props = defineProps({
     timestamp: String,
 
     isCurrentUser: Boolean,
+
+    isLastMessageFromCurrentUser: Boolean,
 });
 
 const videoType = computed(() => {
@@ -32,6 +39,14 @@ const formattedTime = computed(() => {
     return new Date(props.timestamp).toLocaleString();
 });
 
+onMounted(() => {
+    setupTooltip();
+})
+
+const setupTooltip = () => {
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+}
 
 </script>
 

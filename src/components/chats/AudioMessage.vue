@@ -1,16 +1,20 @@
 <template>
-    <div :class="['file-message card shadow-sm mb-3', isCurrentUser ? 'ms-auto' : 'me-auto']">
-        <div class="card-body p-2">
-            <div class="flex-grow-1">
-                <audio :src="fileUrl" class="w-100" controls></audio>
-            </div>
-            <small class="text-muted d-block text-end mt-1">{{ formattedTimestamp }}</small>
+    <div :class="['file-message mb-3', isCurrentUser ? 'ms-auto' : 'me-auto']">
+        <div class="flex-grow-1 shadow-lg" data-bs-toggle="tooltip" :data-bs-title="fileName"
+            data-bs-delay='{"show":"500", "hide":"200"}'>
+            <audio :src="fileUrl" class="w-100" controls></audio>
+        </div>
+        <div
+            :class="['p-2 d-flex align-items-center', isCurrentUser ? 'justify-content-end' : 'justify-content-start']">
+            <span class="badge text-bg-secondary me-1">{{ formattedTime }}</span>
+            <small v-if="isCurrentUser && isLastMessageFromCurrentUser" class="badge text-bg-secondary">{{isSeen ? 'Seen' : 'Already Sent'}}</small>
         </div>
     </div>
-</template> 
+
+</template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 
 const props = defineProps({
     key: String,
@@ -21,16 +25,27 @@ const props = defineProps({
     fileType: String,
     fileSize: String,
     fileName: String,
+    isSeen: Boolean,
     timestamp: String,
 
     isCurrentUser: Boolean,
 
+    isLastMessageFromCurrentUser: Boolean,
+
 });
 
-const formattedTimestamp = computed(() => {
+const formattedTime = computed(() => {
     return new Date(props.timestamp).toLocaleString();
 });
 
+onMounted(() => {
+    setupTooltip();
+});
+
+const setupTooltip = () => {
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+}
 
 </script>
 
@@ -51,5 +66,9 @@ audio::-webkit-media-controls-play-button {
 
 .text-truncate {
     max-width: 200px;
+}
+
+.badge {
+    opacity: 0.6;
 }
 </style>

@@ -1,30 +1,33 @@
 <template>
-    <div :class="['file-message card shadow-sm mb-3', isCurrentUser ? 'ms-auto' : 'me-auto']" class="cursor-pointer">
-        <div class="card-body p-3">
-            <div class="d-flex align-items-center">
-                <div class="file-icon me-3">
-                    <i class="bi" :class="[fileIconClass, 'display-4 text-primary']"></i>
-                </div>
-                <div class="file-info flex-grow-1">
-                    <h6 class="mb-1 fw-bold ">{{ fileName }}</h6>
-                    <p class="mb-0 text-muted small">{{ formattedSize }}</p>
-                </div>
-                <div class="file-actions ms-2">
-                    <button @click="downloadFile" class="btn btn-outline-primary btn-sm">
-                        <i class="bi bi-download "></i>
-                    </button>
-                </div>
+    <div :class="['file-message mb-3 ', isCurrentUser ? 'ms-auto' : 'me-auto']" >
+        <div class="d-flex align-items-center shadow-lg p-3" data-bs-toggle="tooltip"
+        :data-bs-title="fileName"
+        data-bs-delay='{"show":"500", "hide":"200"}'>
+            <div class="file-icon me-3">
+                <i class="bi" :class="[fileIconClass, 'display-4 text-primary']"></i>
             </div>
-            <div class="mt-2 d-flex justify-content-between align-items-center border-top pt-2">
-                <small class="text-muted">{{ formattedTime }}</small>
-                <!-- <span v-if="sender === currentUser && seen" class="text-muted small">Seen</span> -->
+            <div class="file-info flex-grow-1">
+                <h6 class="mb-1 fw-bold text-truncate">{{ fileName }}</h6>
+                <p class="mb-0 text-muted small">{{ formattedSize }}</p>
+            </div>
+            <div class="file-actions ms-2">
+                <button @click="downloadFile" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-download "></i>
+                </button>
             </div>
         </div>
+
+        <div
+            :class="['p-2 d-flex align-items-center', isCurrentUser ? 'justify-content-end' : 'justify-content-start']">
+            <span class="badge text-bg-secondary me-1">{{ formattedTime }}</span>
+            <small v-if="isCurrentUser && isLastMessageFromCurrentUser" class="badge text-bg-secondary">{{isSeen ? 'Seen' : 'Already Sent'}}</small>
+        </div>
     </div>
+
 </template>
 
 <script setup>
-import {computed, ref} from 'vue';
+import { computed, ref, onMounted } from 'vue';
 
 const props = defineProps({
     key: String,
@@ -36,9 +39,11 @@ const props = defineProps({
     fileType: String,
     fileSize: String,
     fileName: String,
+    isSeen: Boolean,
 
     isCurrentUser: Boolean,
 
+    isLastMessageFromCurrentUser: Boolean,
 });
 
 const fileIconClass = computed(() => {
@@ -68,25 +73,36 @@ const formattedTime = computed(() => {
 });
 
 const downloadFile = () => {
-    // Implement file download logic here
     window.open(props.fileUrl, '_blank');
 };
 
+onMounted(() => {
+    setupTooltip();
+});
 
+const setupTooltip = () => {
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+}
 </script>
 
 
 <style scoped>
 .file-message {
-  max-width: 350px;
-  width: 100%;
+    max-width: 350px;
+    width: 100%;
 }
 
 .file-icon i {
-  font-size: 2rem;
+    font-size: 2rem;
 }
 
 .file-info h6 {
-  max-width: 200px;
+    max-width: 200px;
 }
+
+.badge {
+    opacity: 0.6;
+}
+
 </style>

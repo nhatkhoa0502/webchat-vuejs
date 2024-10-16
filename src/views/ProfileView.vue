@@ -152,7 +152,7 @@
   </div>
 </template>
 <script setup>
-import { ref, computed, reactive } from "vue";
+import { ref, computed, reactive , onMounted} from "vue";
 import { getDatabase, ref as dbRef, get, set, child } from "firebase/database";
 import { useStore } from "vuex";
 import {
@@ -180,6 +180,9 @@ const user = computed(() => store.getters.getUser);
 const fileInput = ref(null);
 const db = getDatabase();
 const loading = ref(false);
+
+
+
 
 const getUserData = async (uid) => {
   try {
@@ -298,6 +301,7 @@ const uploadAvatar = async (event) => {
 console.log("user.value: ", user.value);
 getUserData(user.value.uid)
   .then((userData) => {
+    console.log("userData: ", userData);
     if (userData) {
       profile.uid = userData.uid;
       profile.email = userData.email;

@@ -3,10 +3,10 @@
         <!-- header chatbox -->
         <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center">
-                <img src="../../assets/logo.png" class="rounded-circle me-2" width="40" height="40" alt="Avatar">
+                <img :src="mAnotherUser?.avatar" class="rounded-circle me-2" width="40" height="40" alt="Avatar">
                 <div class="d-flex flex-column mx-2">
                     <h5 class="mb-0">{{ mAnotherUser?.displayName }}</h5>
-                    <small class="text-muted">Truy cập {{ mAnotherUser?.lastOnline }} giờ trước</small>
+                    <small class="text-muted">Last Online: {{ mAnotherUser?.lastOnline }} </small>
                 </div>
 
             </div>
@@ -19,7 +19,8 @@
         <!-- content chatbox -->
         <div ref="messageListRef" class="message-list flex-grow-1 overflow-auto p-3">
             <component v-for="message in messages" :key="message.key" :is="getMessageComponent(message.type)"
-                v-bind="message" :isCurrentUser="message.sender == mCurrentUser.uid"></component>
+                v-bind="message" :isCurrentUser="message.sender == mCurrentUser.uid"
+                :isLastMessageFromCurrentUser="message.key === lastMessageFromCurrentUser.key" ></component>
         </div>
 
         <!-- footer chatbox (chat input) -->
@@ -71,7 +72,7 @@ import AudioMessage from './AudioMessage.vue'
 // import SoundMessage from './SoundMessage.vue'
 import { ref, computed, defineProps, onMounted, onUnmounted, watch } from "vue";
 import { useStore } from "vuex";
-import { getDatabase, push, get, child, ref as dbRef, set, onValue, serverTimestamp, query, orderByChild, limitToLast, onChildAdded, off } from "firebase/database";
+import { getDatabase, push, get, child, ref as dbRef, set, onValue, serverTimestamp, query, orderByChild, limitToLast, onChildAdded,onChildChanged, off, update, increment } from "firebase/database";
 import { ref as storageRef, uploadBytes, getDownloadURL, getStorage } from 'firebase/storage';
 import { nextTick } from 'vue';
 
@@ -84,34 +85,42 @@ const props = defineProps({
 })
 const storeVuex = useStore();
 const db = getDatabase();
-var mCurrentUser = ref(null);
-var mAnotherUser = ref(null);
+let mCurrentUser = ref(null);
+let mAnotherUser = ref(null);
 const messages = ref([]);
 const newMessage = ref("");
-var mChatMessageListener = null;
+let mAddedChatMessageListener = null;
+let mChangedChatMessageListener = null;
 const fileInput = ref(null);
 const messageListRef = ref(null);
 const chatId = computed(() => {
     return [mCurrentUser.value?.uid, mAnotherUser.value?.uid].sort().join('_');
 });
-const chatMessagesRef = computed(() => dbRef(db, `chatMessages/${chatId.value}`));
-
+const chatMessagesRef = computed(() => dbRef(db, `chat_messages/${chatId.value}`));
+const lastMessageFromCurrentUser = computed(() => {
+  const reversedMessages = [...messages.value].reverse();
+  return reversedMessages.find(msg => msg.sender === mCurrentUser.value?.uid);
+});
 // audio recording properties
 const isRecording = ref(false);
 const audioURL = ref('');
 let mediaRecorder = null;
 let audioChunks = [];
 
-onMounted(() => {
+onMounted(async () => {
     // Wait for the store to be initialized
     // await store.dispatch('initializeAuth');
-    mCurrentUser.value = storeVuex.getters.getUser;
-    loadAnotherUserAndChatMessages(props.selectedUserId);
+    mCurrentUser.value = await getCurrentUser();
+    await loadAnotherUserAndChatMessages(props.selectedUserId);
 });
 
 onUnmounted(() => {
-    if (mChatMessageListener && chatMessagesRef.value) {
-        off(chatMessagesRef.value, 'child_added', mChatMessageListener);
+    if (mAddedChatMessageListener ) {
+        mAddedChatMessageListener();
+    }
+
+    if (mChangedChatMessageListener ) {
+        mChangedChatMessageListener();
     }
 
     if (mediaRecorder) {
@@ -122,6 +131,10 @@ onUnmounted(() => {
 watch(() => props.selectedUserId, async (newUserId) => {
     loadAnotherUserAndChatMessages(newUserId);
 });
+
+const getCurrentUser = async () => {
+    return storeVuex.getters.getUser;
+}
 
 const loadAnotherUserAndChatMessages = async (selectedUserId) => {
     if (mCurrentUser.value && selectedUserId) {
@@ -169,13 +182,8 @@ const getChatMessages = async (limit = 50) => {
         console.error("getChatMessages: mCurrentUser or mAnotherUser is null");
         return;
     }
-    
-    const messagesQuery = query(chatMessagesRef.value, limitToLast(limit));
 
-    // Hủy bỏ listener cũ nếu có
-    if (mChatMessageListener) {
-        off(chatMessagesRef.value, 'child_added', mChatMessageListener);
-    }
+    const messagesQuery = query(chatMessagesRef.value, limitToLast(limit));
 
     // Lấy dữ liệu ban đầu
     try {
@@ -189,10 +197,11 @@ const getChatMessages = async (limit = 50) => {
         });
 
         messages.value = initialMessages;
+        markAllMessagesAsSeen();
         scrollToBottom();
 
         // Lắng nghe tin nhắn mới
-        mChatMessageListener = onChildAdded(chatMessagesRef.value, (childSnapshot) => {
+        mAddedChatMessageListener = onChildAdded(chatMessagesRef.value, (childSnapshot) => {
             const newMessage = {
                 key: childSnapshot.key,
                 ...childSnapshot.val()
@@ -205,12 +214,56 @@ const getChatMessages = async (limit = 50) => {
                     scrollToBottom();
                 }
 
+                if (newMessage.sender == mAnotherUser.value.uid) {
+                    markMessageAsSeen(newMessage.key);
+                }
+
             }
         });
+
+        mChangedChatMessageListener = onChildChanged(chatMessagesRef.value, (childSnapshot) => {
+            const changedMessage = {
+                key: childSnapshot.key,
+                ...childSnapshot.val()
+            };
+            console.log("changedMessage in child change: " + changedMessage);
+            const index = messages.value.findIndex(msg => msg.key === changedMessage.key);
+            if (index !== -1) {
+                messages.value[index] = changedMessage;
+            }
+        });
+
     } catch (error) {
         console.error("Error fetching messages:", error);
     }
 };
+
+const markMessageAsSeen = async (messageKey) => {
+    const messageRef = dbRef(db, `chat_messages/${chatId.value}/${messageKey}`);
+    await update(messageRef, { isSeen: true });
+    await update(dbRef(db,
+        `user_chats/${mCurrentUser.value.uid}/${mAnotherUser.value.uid}`),
+        { unreadCount: increment(-1) });
+}
+
+const markAllMessagesAsSeen = async () => {
+    if (!mCurrentUser.value || !mAnotherUser.value) {
+        console.error("markMessageAsSeen: mCurrentUser or mAnotherUser is null");
+        return;
+    }
+
+    const unseenMessages = messages.value.filter(msg => msg.sender === mAnotherUser.value.uid && !msg.isSeen);
+
+    for (const msg of unseenMessages) {
+        const messageRef = dbRef(db, `chat_messages/${chatId.value}/${msg.key}`);
+        await update(messageRef, { isSeen: true });
+        
+    }
+    await update(dbRef(db,
+        `user_chats/${mCurrentUser.value.uid}/${mAnotherUser.value.uid}`),
+        { unreadCount: increment(-unseenMessages.length) });
+
+}
 
 const scrollToBottom = () => {
     nextTick(() => {
@@ -221,14 +274,15 @@ const scrollToBottom = () => {
 };
 
 const sendMessage = async () => {
-    if (newMessage.value.trim() && mCurrentUser.value && mAnotherUser.value ) {
+    if (newMessage.value.trim() && mCurrentUser.value && mAnotherUser.value) {
         const newMessageRef = push(chatMessagesRef.value);
 
         const messageData = {
             type: "text",
             content: newMessage.value,
-            timestamp: serverTimestamp(),
-            sender: mCurrentUser.value.uid
+            timestamp: Date.now(),
+            sender: mCurrentUser.value.uid,
+            isSeen: false,
         }
 
         try {
@@ -236,10 +290,29 @@ const sendMessage = async () => {
 
             newMessage.value = "";
 
+            // Update last message in userChats for both users
+            const updateData = {
+                timestamp: messageData.timestamp,
+                lastMessageKey: newMessageRef.key,
+            };
+
+            await updateUserChatsData(updateData);
+
+
         } catch (error) {
             console.error("Error sending message:", error);
         }
     }
+}
+
+const updateUserChatsData = async (updateData) => {
+    await update(dbRef(db,
+        `user_chats/${mCurrentUser.value.uid}/${mAnotherUser.value.uid}`),
+        updateData);
+
+    await update(dbRef(db,
+        `user_chats/${mAnotherUser.value.uid}/${mCurrentUser.value.uid}`),
+        { ...updateData, unreadCount: increment(1) });
 }
 
 const triggerFileUpload = () => {
@@ -254,7 +327,7 @@ const handleFileUpload = async (event) => {
     const fileRef = storageRef(storage, `chat_files/${Date.now()}_${chatId.value}_${file.name}`);
     await uploadBytes(fileRef, file);
     const downloadURL = await getDownloadURL(fileRef);
-    
+
     let messageData = {
         sender: mCurrentUser.value.uid,
         type: '',
@@ -262,7 +335,8 @@ const handleFileUpload = async (event) => {
         fileName: file.name,
         fileType: file.type,
         fileSize: file.size,
-        timestamp: serverTimestamp(),
+        isSeen: false,
+        timestamp: Date.now(),
     };
 
     if (file.type.startsWith('image/')) {
@@ -298,7 +372,7 @@ const startRecording = async () => {
             handleAudioUpload(audioBlob, audioURL.value);
             audioChunks = [];
             mediaRecorder.stream.getTracks().forEach(track => track.stop());
-        }; 
+        };
 
         mediaRecorder.start();
         isRecording.value = true;
@@ -329,7 +403,8 @@ const handleAudioUpload = async (audioBlob, fileName) => {
         fileName: fileName,
         fileType: audioBlob.type,
         fileSize: audioBlob.size,
-        timestamp: serverTimestamp(),
+        isSeen: false,
+        timestamp: Date.now(),
     };
     sendMediaMessage(messageData);
 }
@@ -349,6 +424,12 @@ const sendMediaMessage = async (messageData) => {
 
     try {
         await set(newMessageRef, messageData);
+        const updateData = {
+            timestamp: messageData.timestamp,
+            lastMessageKey: newMessageRef.key,
+        };
+
+        await updateUserChatsData(updateData);
     } catch (error) {
         console.error("Error sending media message:", error);
     }

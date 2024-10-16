@@ -1,12 +1,15 @@
 <template>
-    <div :class="['message mb-3 d-flex', isCurrentUser ? 'justify-content-end' : 'justify-content-start']">
-        <img v-show="isCurrentUser == false" :src="props.avatarUrl" class="rounded-circle me-2" width="30" height="30" alt="Avatar">
-        <div :class="[' rounded p-2 max-width-70', props.isCurrentUser ? 'bg-primary text-white' : 'bg-secondary-subtle']">
-            <p class="mb-0">{{ content }}</p>
-            <small :class="[isCurrentUser ? 'text-white-50' : 'text-muted']">{{formattedTime}}</small>
-            
+    <div :class="['message mb-3 d-flex flex-column', isCurrentUser ? 'align-items-end' : 'align-items-start']">
+        <div class="d-flex">
+            <img v-show="!isCurrentUser" :src="props.avatarUrl" class="rounded-circle me-2" width="30" height="30"
+                alt="Avatar">
+            <div
+                :class="['rounded p-2 max-width-70', props.isCurrentUser ? 'bg-primary text-white' : 'bg-secondary-subtle']">
+                <p class="mb-0">{{ content }}</p>
+                <small :class="[isCurrentUser ? 'text-white-50' : 'text-muted']">{{ formattedTime }}</small>
+            </div>
         </div>
-        <!-- <small v-if="isCurrentUser && seen" class="d-block text-muted">Seen</small> -->
+        <small v-if="isCurrentUser && isLastMessageFromCurrentUser" :class="['badge text-bg-secondary mt-1']">{{ isSeen ? 'Seen' : 'Already Sent' }}</small>
     </div>
 </template>
 
@@ -19,8 +22,11 @@ const props = defineProps({
     type: String,
     content: String,
     avatarUrl: String,
+    isSeen: Boolean,
     isCurrentUser: Boolean,
     timestamp: String,
+
+    isLastMessageFromCurrentUser: Boolean,
 })
 
 const formattedTime = computed(() => {
@@ -29,3 +35,9 @@ const formattedTime = computed(() => {
 
 
 </script>
+
+<style scoped>
+.badge {
+    opacity: 0.6;
+}
+</style>
