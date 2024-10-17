@@ -1,13 +1,18 @@
 <template>
     <div :class="['file-message  mb-3', isCurrentUser ? 'ms-auto' : 'me-auto']">
+
+        <img v-show="!isCurrentUser" :src="props.avatar" class="rounded-circle me-2" width="30" height="30"
+            alt="Avatar">
         <div class="ratio ratio-16x9 shadow-lg" data-bs-toggle="tooltip" :data-bs-title="fileName"
             data-bs-delay='{"show":"500", "hide":"200"}'>
             <video :src="fileUrl" :type="videoType" class="rounded-top" controls preload="metadata"></video>
         </div>
+
         <div
             :class="['p-2 d-flex align-items-center', isCurrentUser ? 'justify-content-end' : 'justify-content-start']">
             <span class="badge text-bg-secondary me-1">{{ formattedTime }}</span>
-            <small v-if="isCurrentUser && isLastMessageFromCurrentUser" class="badge text-bg-secondary">{{isSeen ? 'Seen' : 'Already Sent'}}</small>
+            <small v-if="isCurrentUser && isLastMessageFromCurrentUser" class="badge text-bg-secondary">{{ isSeen ?
+                'Seen' : 'Already Sent' }}</small>
         </div>
     </div>
 </template>
@@ -25,10 +30,12 @@ const props = defineProps({
     fileSize: String,
     fileName: String,
     timestamp: String,
-
+    isSeen: Boolean,
     isCurrentUser: Boolean,
 
     isLastMessageFromCurrentUser: Boolean,
+
+    avatar: String,
 });
 
 const videoType = computed(() => {

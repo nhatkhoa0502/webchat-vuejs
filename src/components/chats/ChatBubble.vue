@@ -81,7 +81,16 @@ const formattedText = computed(() => {
 const formattedTime = computed(() => {
   if (!mUserChatData.value?.timestamp) return '';
   const date = new Date(mUserChatData.value?.timestamp);
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const minusDate = (Date.now() - date.getTime()) / 1000;
+  if (minusDate < 60) {
+    return 'Just now';
+  } else if (minusDate < 3600) {
+    return `${Math.floor(minusDate / 60)} minutes ago`;
+  } else if (minusDate < 86400 ) {
+    return `${Math.floor(minusDate / 3600)} hours ago`;
+  } else {
+    return date.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+  }
 });
 
 const selectChat = () => {

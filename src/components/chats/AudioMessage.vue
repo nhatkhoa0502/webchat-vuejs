@@ -1,13 +1,18 @@
 <template>
     <div :class="['file-message mb-3', isCurrentUser ? 'ms-auto' : 'me-auto']">
+
+        <img v-show="!isCurrentUser" :src="props.avatar" class="rounded-circle me-2" width="30" height="30"
+            alt="Avatar">
         <div class="flex-grow-1 shadow-lg" data-bs-toggle="tooltip" :data-bs-title="fileName"
             data-bs-delay='{"show":"500", "hide":"200"}'>
             <audio :src="fileUrl" class="w-100" controls></audio>
         </div>
+
         <div
             :class="['p-2 d-flex align-items-center', isCurrentUser ? 'justify-content-end' : 'justify-content-start']">
             <span class="badge text-bg-secondary me-1">{{ formattedTime }}</span>
-            <small v-if="isCurrentUser && isLastMessageFromCurrentUser" class="badge text-bg-secondary">{{isSeen ? 'Seen' : 'Already Sent'}}</small>
+            <small v-if="isCurrentUser && isLastMessageFromCurrentUser" class="badge text-bg-secondary">{{ isSeen ?
+                'Seen' : 'Already Sent'}}</small>
         </div>
     </div>
 
@@ -27,7 +32,7 @@ const props = defineProps({
     fileName: String,
     isSeen: Boolean,
     timestamp: String,
-
+    avatar: String,
     isCurrentUser: Boolean,
 
     isLastMessageFromCurrentUser: Boolean,

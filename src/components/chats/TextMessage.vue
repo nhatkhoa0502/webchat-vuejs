@@ -1,7 +1,7 @@
 <template>
     <div :class="['message mb-3 d-flex flex-column', isCurrentUser ? 'align-items-end' : 'align-items-start']">
         <div class="d-flex">
-            <img v-show="!isCurrentUser" :src="props.avatarUrl" class="rounded-circle me-2" width="30" height="30"
+            <img v-show="!isCurrentUser" :src="props.avatar" class="rounded-circle me-2" width="30" height="30"
                 alt="Avatar">
             <div
                 :class="['rounded p-2 max-width-70', props.isCurrentUser ? 'bg-primary text-white' : 'bg-secondary-subtle']">
@@ -21,7 +21,7 @@ const props = defineProps({
     sender: String,
     type: String,
     content: String,
-    avatarUrl: String,
+    avatar: String,
     isSeen: Boolean,
     isCurrentUser: Boolean,
     timestamp: String,

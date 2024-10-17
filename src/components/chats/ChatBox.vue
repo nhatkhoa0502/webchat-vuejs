@@ -6,7 +6,7 @@
                 <img :src="mAnotherUser?.avatar" class="rounded-circle me-2" width="40" height="40" alt="Avatar">
                 <div class="d-flex flex-column mx-2">
                     <h5 class="mb-0">{{ mAnotherUser?.displayName }}</h5>
-                    <small class="text-muted">Last Online: {{ mAnotherUser?.lastOnline }} </small>
+                    <small class="text-muted">{{mAnotherUser?.isOnline ? 'Online' : formattedLastOnline }} </small>
                 </div>
 
             </div>
@@ -19,8 +19,8 @@
         <!-- content chatbox -->
         <div ref="messageListRef" class="message-list flex-grow-1 overflow-auto p-3">
             <component v-for="message in messages" :key="message.key" :is="getMessageComponent(message.type)"
-                v-bind="message" :isCurrentUser="message.sender == mCurrentUser.uid"
-                :isLastMessageFromCurrentUser="message.key === lastMessageFromCurrentUser.key" ></component>
+                v-bind="message" :isCurrentUser="message.sender == mCurrentUser.uid" :avatar="mAnotherUser?.avatar"
+                :isLastMessageFromCurrentUser="message.key === lastMessageFromCurrentUser?.key"></component>
         </div>
 
         <!-- footer chatbox (chat input) -->
@@ -44,9 +44,11 @@
                                 <span class="visually-hidden">Recording...</span>
                             </div>
                         </div>
-                        <button @click="sendEmoji" class="btn btn-outline-primary btn-sm bounce-btn">
+                        <button @click="" class="btn btn-outline-primary btn-sm bounce-btn">
                             <i class="bi bi-emoji-smile"></i>
                         </button>
+
+                    
                     </div>
                 </div>
                 <div class="card-body">
@@ -70,13 +72,13 @@ import VideoMessage from './VideoMessage.vue'
 import FileMessage from './FileMessage.vue'
 import AudioMessage from './AudioMessage.vue'
 // import SoundMessage from './SoundMessage.vue'
-import { ref, computed, defineProps, onMounted, onUnmounted, watch } from "vue";
+import { ref, computed, shallowRef,defineProps, onMounted, onUnmounted, watch } from "vue";
 import { useStore } from "vuex";
-import { getDatabase, push, get, child, ref as dbRef, set, onValue, serverTimestamp, query, orderByChild, limitToLast, onChildAdded,onChildChanged, off, update, increment } from "firebase/database";
+import { getDatabase, push, get, child, ref as dbRef, set, onValue, serverTimestamp, query, orderByChild, limitToLast, onChildAdded, onChildChanged, off, update, increment } from "firebase/database";
 import { ref as storageRef, uploadBytes, getDownloadURL, getStorage } from 'firebase/storage';
 import { nextTick } from 'vue';
 
-const props = defineProps({
+const props = defineProps({ 
     selectedUserId: {
         type: String,
         // default: '08EWqzrSzwgSfZlSexzaclW8Yoa2'
@@ -98,28 +100,48 @@ const chatId = computed(() => {
 });
 const chatMessagesRef = computed(() => dbRef(db, `chat_messages/${chatId.value}`));
 const lastMessageFromCurrentUser = computed(() => {
-  const reversedMessages = [...messages.value].reverse();
-  return reversedMessages.find(msg => msg.sender === mCurrentUser.value?.uid);
+    const reversedMessages = [...messages.value].reverse();
+    return reversedMessages.find(msg => msg.sender === mCurrentUser.value?.uid);
 });
+
+const formattedLastOnline = computed(() => {
+  if (!mAnotherUser.value?.lastOnline) return '';
+  const date = new Date(mAnotherUser.value?.lastOnline);
+  const minusDate = (Date.now() - date.getTime()) / 1000;
+  if (minusDate < 60) {
+    return 'Online';
+  } else if (minusDate < 3600) {
+    return `Online ${Math.floor(minusDate / 60)} minutes ago`;
+  } else if (minusDate < 86400 ) {
+    return `Online ${Math.floor(minusDate / 3600)} hours ago`;
+  } else {
+    return `Online ${date.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}`;
+  }
+});
+
 // audio recording properties
 const isRecording = ref(false);
 const audioURL = ref('');
 let mediaRecorder = null;
 let audioChunks = [];
 
+
+
 onMounted(async () => {
     // Wait for the store to be initialized
     // await store.dispatch('initializeAuth');
     mCurrentUser.value = await getCurrentUser();
     await loadAnotherUserAndChatMessages(props.selectedUserId);
+
+
 });
 
 onUnmounted(() => {
-    if (mAddedChatMessageListener ) {
+    if (mAddedChatMessageListener) {
         mAddedChatMessageListener();
     }
 
-    if (mChangedChatMessageListener ) {
+    if (mChangedChatMessageListener) {
         mChangedChatMessageListener();
     }
 
@@ -131,6 +153,7 @@ onUnmounted(() => {
 watch(() => props.selectedUserId, async (newUserId) => {
     loadAnotherUserAndChatMessages(newUserId);
 });
+
 
 const getCurrentUser = async () => {
     return storeVuex.getters.getUser;
@@ -257,7 +280,7 @@ const markAllMessagesAsSeen = async () => {
     for (const msg of unseenMessages) {
         const messageRef = dbRef(db, `chat_messages/${chatId.value}/${msg.key}`);
         await update(messageRef, { isSeen: true });
-        
+
     }
     await update(dbRef(db,
         `user_chats/${mCurrentUser.value.uid}/${mAnotherUser.value.uid}`),
