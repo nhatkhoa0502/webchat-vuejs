@@ -21,6 +21,7 @@ import {
 } from "vue";
 import NavigationDrawer from "./components/NavigationDrawer.vue";
 import { useStore } from "vuex";
+
 // import { getRedirectResult, getAuth } from "firebase/auth";
 // import router from "@/router";
 
