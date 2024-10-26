@@ -24,7 +24,7 @@
       <v-list-item
         prepend-icon="mdi-message-text"
         title="Chats"
-        value="home"
+        value="chats"
         to="/chats"
       >
       </v-list-item>
