@@ -101,7 +101,6 @@ import {
   // signInWithRedirect,
 } from "firebase/auth";
 import { showSuccessAlert, showErrorAlert } from "../utils/notification";
-import router from "@/router";
 
 const email = ref("");
 const password = ref("");
@@ -126,8 +125,6 @@ const handleLogin = async () => {
     if (user.emailVerified) {
       showSuccessAlert("Login Successful!");
       console.log("user", user);
-
-      router.push("/"); // Chuyển đến trang chính sau khi đăng nhập thành công
     } else {
       showErrorAlert("Please verify your email before logging in.");
       await signOut(auth);
