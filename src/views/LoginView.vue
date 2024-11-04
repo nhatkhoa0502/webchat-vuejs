@@ -93,25 +93,17 @@
 </template>
 <script setup>
 import { ref } from "vue";
-import {
-  getAuth,
-  signInWithEmailAndPassword,
-  signOut,
-  // GoogleAuthProvider,
-  // signInWithRedirect,
-} from "firebase/auth";
+import { getAuth, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { showSuccessAlert, showErrorAlert } from "../utils/notification";
 
 const email = ref("");
 const password = ref("");
 const loading = ref(false);
-// const loadingLoginGoogle = ref(false);
 const showPassword = ref(false);
 
 // login email/password
 const handleLogin = async () => {
   loading.value = true; // Hiển thị spinner
-
   try {
     const auth = getAuth();
     const userCredential = await signInWithEmailAndPassword(
@@ -120,37 +112,14 @@ const handleLogin = async () => {
       password.value
     );
     const user = userCredential.user;
-
-    // Kiểm tra xác minh email
-    if (user.emailVerified) {
-      showSuccessAlert("Login Successful!");
-      console.log("user", user);
-    } else {
-      showErrorAlert("Please verify your email before logging in.");
-      await signOut(auth);
-    }
+    showSuccessAlert("Login Successful!");
+    console.log("user", user);
   } catch (error) {
     showErrorAlert("Login Failed!\n" + error.message);
   } finally {
     loading.value = false; // Ẩn spinner
   }
 };
-
-// // login with google
-// const handleLoginGoogle = async () => {
-//   const auth = getAuth();
-//   const provider = new GoogleAuthProvider();
-//   try {
-//     loadingLoginGoogle.value = true;
-//     await signInWithRedirect(auth, provider);
-
-//     // router.push("/");
-//   } catch (error) {
-//     console.error("Error during Google sign-in:", error);
-//   } finally {
-//     loadingLoginGoogle.value = false; // Ẩn spinner
-//   }
-// };
 
 // show, hide password
 const togglePasswordVisibility = () => {

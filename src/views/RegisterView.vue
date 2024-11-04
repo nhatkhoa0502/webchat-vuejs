@@ -148,12 +148,7 @@ const handleRegister = async () => {
     );
     const user = userCredential.user;
 
-    // Gửi email xác minh
-    await sendEmailVerification(user);
-
-    showSuccessAlert(
-      "Register Successfully! Please check your email for verification."
-    );
+    showSuccessAlert("Register Successfully!");
     console.log("Register Successfully!", user);
 
     const db = getDatabase();
@@ -167,8 +162,6 @@ const handleRegister = async () => {
       phone: "",
       address: "",
     });
-
-    await signOut(auth);
   } catch (error) {
     showErrorAlert("Register Fail!\n" + error.message);
   } finally {
