@@ -42,15 +42,14 @@
         </table>
       </div>
       <div class="user-profile">
-        <form @submit.prevent="search" class="text-center">
+        <div class="text-center">
           <input
             class="input-field"
             v-model="searchquery"
             type="text"
             placeholder=" Nhập nội dung tìm kiếm"
           />
-          <button type="submit" hidden>Tìm kiếm</button>
-        </form>
+        </div>
         <div
           class="container d-flex flex-column align-items-center vh-100"
           v-if="selectedUser && searchquery == ''"
@@ -66,7 +65,7 @@
             <h2>
               <b>{{ selectedUser.displayName }}</b>
             </h2>
-            UID: {{ selectedUser.email }} <br />
+            Email: {{ selectedUser.email }} <br />
 
             <br />
             <div class="submit-dialog">
@@ -140,12 +139,6 @@
                           : "Thêm bạn bè"
                       }}
                     </button>
-                    <button
-                      class="btn btn-primary"
-                      v-if="matchedFriends.find((i) => i.uid === user.uid)"
-                    >
-                      Nhắn tin
-                    </button>
                   </td>
                 </tr>
               </tbody>
@@ -186,74 +179,25 @@ import {
   serverTimestamp,
   remove,
   update,
+  set,
+  increment,
 } from "firebase/database";
 import { getAuth } from "firebase/auth";
 import { showErrorAlert } from "../utils/notification"; // Nếu có hàm thông báo lỗi
 
-// Mảng lưu danh sách tất cả người dùng
 const users = reactive([]);
-
-// Cờ để kiểm tra trạng thái loading
 const loading = ref(false);
-
 const auth = getAuth();
 const currentUser = auth.currentUser;
-
-// Hàm lấy danh sách tất cả người dùng từ Firebase
-const getAllUsers = async () => {
-  loading.value = true; // Hiển thị loading trong lúc lấy dữ liệu
-  const db = getDatabase(); // Lấy instance của Firebase Realtime Database
-  const dbReference = dbRef(db); // Tham chiếu tới gốc của database
-
-  try {
-    // Lấy tất cả dữ liệu từ đường dẫn 'users/'
-    const snapshot = await get(child(dbReference, `users`));
-
-    if (snapshot.exists()) {
-      // Nếu có dữ liệu
-      const data = snapshot.val(); // Lấy dữ liệu
-
-      // Lặp qua từng user và đẩy vào mảng users[]
-      Object.keys(data).forEach((uid) => {
-        if (uid != currentUser.uid) {
-          users.push({
-            uid: uid,
-            email: data[uid].email,
-            displayName: data[uid].displayName,
-            avatar: data[uid].avatar,
-            gender: data[uid].gender,
-            phone: data[uid].phone,
-            address: data[uid].address,
-            dob: data[uid].dob,
-          });
-        }
-      });
-
-      console.log("Users list:", users); // Kiểm tra dữ liệu được lấy
-    } else {
-      console.log("No users available.");
-    }
-  } catch (error) {
-    console.error("Error getting users data:", error);
-    showErrorAlert("Error getting users data: " + error); // Hiển thị thông báo lỗi nếu cần
-  } finally {
-    loading.value = false; // Kết thúc trạng thái loading
-  }
-};
-
-// Gọi hàm khi component được mount
-getAllUsers();
-
 const searchquery = ref("");
 const selectedUser = ref(null);
+const pendingList = reactive([]);
+const myRequestList = reactive([]);
+const matchedUsers = reactive([]);
+const myFriendsList = reactive([]);
+const matchedFriends = reactive([]);
+const db = getDatabase();
 
-// Hàm để chọn người dùng
-const selectUser = (user) => {
-  selectedUser.value = user;
-  console.log(selectedUser.value);
-};
-
-// Tạo một computed để tự động cập nhật filteredUsers khi query thay đổi
 const filteredUsers = computed(() => {
   if (searchquery.value.trim() === "") {
     return users;
@@ -262,29 +206,11 @@ const filteredUsers = computed(() => {
   return users.filter((user) => searchRegex.test(user.displayName));
 });
 
-// Hàm thêm lời mời kết bạn
-async function addFriendRequest(fromUid, toUid) {
-  const db = getDatabase();
-  const friendsRef = dbRef(db, "friend");
+const selectUser = (user) => {
+  selectedUser.value = user;
+  console.log(selectedUser.value);
+};
 
-  try {
-    const newFriendRequest = {
-      from: fromUid,
-      to: toUid,
-      status: "pending",
-      sentAt: serverTimestamp(),
-    };
-
-    await push(friendsRef, newFriendRequest);
-    console.log("Lời mời kết bạn đã được gửi thành công!");
-    // Có thể thêm thông báo thành công ở đây
-  } catch (error) {
-    console.error("Lỗi khi gửi lời mời kết bạn:", error);
-    showErrorAlert("Lỗi khi gửi lời mời kết bạn: " + error.message);
-  }
-}
-
-// Hàm xử lý khi nút "Thêm bạn bè" được nhấn
 const sendFriendRequest = async (toUid) => {
   if (currentUser) {
     await addFriendRequest(currentUser.uid, toUid);
@@ -293,45 +219,8 @@ const sendFriendRequest = async (toUid) => {
     showErrorAlert("Bạn cần đăng nhập để thực hiện chức năng này.");
   }
 };
-async function cancelFriendRequest(toUid) {
-  const db = getDatabase();
-  const friendsRef = dbRef(db, "friend");
 
-  try {
-    // Tìm requestId của lời mời kết bạn để xóa
-    const requestSnapshot = await get(friendsRef);
-    if (requestSnapshot.exists()) {
-      const requests = requestSnapshot.val();
-      let requestIdToRemove = null;
-
-      Object.keys(requests).forEach((requestId) => {
-        const request = requests[requestId];
-        if (
-          request.to === toUid &&
-          request.from === currentUser.uid &&
-          request.status === "pending"
-        ) {
-          requestIdToRemove = requestId;
-        }
-      });
-
-      if (requestIdToRemove) {
-        // Thay thế requestToRemoveRef bằng ref từ Firebase và gọi remove() đúng cách
-        const requestToRemoveRef = dbRef(db, `friend/${requestIdToRemove}`);
-        await remove(requestToRemoveRef); // Gọi phương thức remove để xóa dữ liệu
-        console.log("Đã hủy lời mời kết bạn.");
-        loadRequests();
-      } else {
-        console.log("Không tìm thấy lời mời kết bạn để hủy.");
-      }
-    }
-  } catch (error) {
-    console.error("Lỗi khi hủy lời mời kết bạn:", error);
-    showErrorAlert("Lỗi khi hủy lời mời kết bạn: " + error.message);
-  }
-}
-
-async function deleteFriendRequest(fromUid) {
+const deleteFriendRequest = async (fromUid) => {
   const db = getDatabase();
   const friendsRef = dbRef(db, "friend");
 
@@ -368,9 +257,9 @@ async function deleteFriendRequest(fromUid) {
     console.error("Lỗi khi hủy lời mời kết bạn:", error);
     showErrorAlert("Lỗi khi hủy lời mời kết bạn: " + error.message);
   }
-}
+};
 
-async function acceptFriendRequest(fromUid) {
+const acceptFriendRequest = async (fromUid) => {
   const db = getDatabase();
   const friendsRef = dbRef(db, "friend");
 
@@ -407,12 +296,107 @@ async function acceptFriendRequest(fromUid) {
     console.error("Lỗi khi chấp nhận lời mời kết bạn:", error);
     showErrorAlert("Lỗi khi chấp nhận lời mời kết bạn: " + error.message);
   }
-}
+  initFirstMessage(currentUser.uid, fromUid);
+};
 
-// Mảng lưu trữ các lời mời kết bạn đã gửi
-const pendingList = reactive([]);
+// hàm thu hồi lời mời kb khi lỡ gửi lời mời kb
+const cancelFriendRequest = async (toUid) => {
+  const db = getDatabase();
+  const friendsRef = dbRef(db, "friend");
 
-// Hàm lấy danh sách lời mời kết bạn mà người dùng đã gửi
+  try {
+    // Tìm requestId của lời mời kết bạn để xóa
+    const requestSnapshot = await get(friendsRef);
+    if (requestSnapshot.exists()) {
+      const requests = requestSnapshot.val();
+      let requestIdToRemove = null;
+
+      Object.keys(requests).forEach((requestId) => {
+        const request = requests[requestId];
+        if (
+          request.to === toUid &&
+          request.from === currentUser.uid &&
+          request.status === "pending"
+        ) {
+          requestIdToRemove = requestId;
+        }
+      });
+
+      if (requestIdToRemove) {
+        // Thay thế requestToRemoveRef bằng ref từ Firebase và gọi remove() đúng cách
+        const requestToRemoveRef = dbRef(db, `friend/${requestIdToRemove}`);
+        await remove(requestToRemoveRef); // Gọi phương thức remove để xóa dữ liệu
+        console.log("Đã hủy lời mời kết bạn.");
+        loadRequests();
+      } else {
+        console.log("Không tìm thấy lời mời kết bạn để hủy.");
+      }
+    }
+  } catch (error) {
+    console.error("Lỗi khi hủy lời mời kết bạn:", error);
+    showErrorAlert("Lỗi khi hủy lời mời kết bạn: " + error.message);
+  }
+};
+
+const getAllUsers = async () => {
+  loading.value = true; // Hiển thị loading trong lúc lấy dữ liệu
+  const db = getDatabase(); // Lấy instance của Firebase Realtime Database
+  const dbReference = dbRef(db); // Tham chiếu tới gốc của database
+
+  try {
+    // Lấy tất cả dữ liệu từ đường dẫn 'users/'
+    const snapshot = await get(child(dbReference, `users`));
+
+    if (snapshot.exists()) {
+      // Nếu có dữ liệu
+      const data = snapshot.val(); // Lấy dữ liệu
+
+      // Lặp qua từng user và đẩy vào mảng users[]
+      Object.keys(data).forEach((uid) => {
+        if (uid != currentUser.uid) {
+          users.push({
+            uid: uid,
+            email: data[uid].email,
+            displayName: data[uid].displayName,
+            avatar: data[uid].avatar,
+            gender: data[uid].gender,
+            phone: data[uid].phone,
+            address: data[uid].address,
+            dob: data[uid].dob,
+          });
+        }
+      });
+      console.log("Users list:", users); // Kiểm tra dữ liệu được lấy
+    } else {
+      console.log("No users available.");
+    }
+  } catch (error) {
+    console.error("Error getting users data:", error);
+    showErrorAlert("Error getting users data: " + error); // Hiển thị thông báo lỗi nếu cần
+  } finally {
+    loading.value = false; // Kết thúc trạng thái loading
+  }
+};
+
+const addFriendRequest = async (fromUid, toUid) => {
+  const db = getDatabase();
+  const friendsRef = dbRef(db, "friend");
+
+  try {
+    const newFriendRequest = {
+      from: fromUid,
+      to: toUid,
+      status: "pending",
+      sentAt: serverTimestamp(),
+    };
+    await push(friendsRef, newFriendRequest);
+    console.log("Lời mời kết bạn đã được gửi thành công!");
+  } catch (error) {
+    console.error("Lỗi khi gửi lời mời kết bạn:", error);
+    showErrorAlert("Lỗi khi gửi lời mời kết bạn: " + error.message);
+  }
+};
+
 const getMyPendingFriendRequests = async () => {
   if (!currentUser) {
     showErrorAlert("Bạn cần đăng nhập để thực hiện chức năng này.");
@@ -454,9 +438,6 @@ const getMyPendingFriendRequests = async () => {
   }
 };
 
-const myRequestList = reactive([]);
-
-// Hàm lấy danh sách lời mời kết bạn đã nhận
 const getMyRequestsList = async () => {
   if (!currentUser) {
     showErrorAlert("Bạn cần đăng nhập để thực hiện chức năng này.");
@@ -500,8 +481,6 @@ const getMyRequestsList = async () => {
   }
 };
 
-const matchedUsers = reactive([]); // Mảng để lưu danh sách các user tìm được
-
 const filterPendingUsers = () => {
   // Xóa toàn bộ phần tử của mảng bằng splice để Vue phản ứng đúng
   matchedUsers.splice(0, matchedUsers.length);
@@ -521,11 +500,6 @@ const loadRequests = async () => {
   await getMyRequestsList();
   filterPendingUsers(); // Gọi filterPendingUsers sau khi cả hai hàm trên đã hoàn thành
 };
-
-loadRequests();
-
-//Danh sách bạn bè
-const myFriendsList = reactive([]);
 
 const getMyFriendsList = async () => {
   if (!currentUser) {
@@ -570,8 +544,6 @@ const getMyFriendsList = async () => {
   }
 };
 
-const matchedFriends = reactive([]);
-
 const filterFriends = () => {
   matchedFriends.splice(0, matchedFriends.length);
 
@@ -589,6 +561,44 @@ const loadFriends = async () => {
   filterFriends();
 };
 
+const initFirstMessage = async (myUid, anotherUid) => {
+  const chatId = [myUid, anotherUid].sort().join("_");
+  const chatMessagesRef = dbRef(db, `chat_messages/${chatId}`);
+  const newMessageRef = push(chatMessagesRef);
+
+  const messageData = {
+    type: "text",
+    content: "Hello, you just accepted my friend request",
+    timestamp: Date.now(),
+    sender: anotherUid,
+    isSeen: false,
+  };
+
+  try {
+    await set(newMessageRef, messageData);
+
+    // Update last message in userChats for both users
+    const updateData = {
+      timestamp: messageData.timestamp,
+      lastMessageKey: newMessageRef.key,
+    };
+
+    await updateUserChatsData(updateData, myUid, anotherUid);
+  } catch (error) {
+    console.error("Error sending message:", error);
+  }
+};
+
+const updateUserChatsData = async (updateData, myUid, anotherUid) => {
+  await update(dbRef(db, `user_chats/${myUid}/${anotherUid}`), updateData);
+  await update(dbRef(db, `user_chats/${anotherUid}/${myUid}`), {
+    ...updateData,
+    unreadCount: increment(1),
+  });
+};
+
+getAllUsers();
+loadRequests();
 loadFriends();
 </script>
 

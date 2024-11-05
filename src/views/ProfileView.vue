@@ -152,7 +152,7 @@
   </div>
 </template>
 <script setup>
-import { ref, computed, reactive , onMounted} from "vue";
+import { ref, computed, reactive, onMounted } from "vue";
 import { getDatabase, ref as dbRef, get, set, child } from "firebase/database";
 import { useStore } from "vuex";
 import {
@@ -180,9 +180,6 @@ const user = computed(() => store.getters.getUser);
 const fileInput = ref(null);
 const db = getDatabase();
 const loading = ref(false);
-
-
-
 
 const getUserData = async (uid) => {
   try {
@@ -216,6 +213,9 @@ const cancelEdit = () => {
 
 const saveProfile = async () => {
   loading.value = true;
+  if (profile.dob === undefined) {
+    profile.dob = "";
+  }
   console.log("Profile saved", profile);
   try {
     await set(dbRef(db, "users/" + user.value.uid), {

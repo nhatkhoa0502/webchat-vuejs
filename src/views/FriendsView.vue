@@ -4,7 +4,7 @@
       <div class="title-1">
         <h5><b>Tất cả bạn bè</b></h5>
       </div>
-      <form @submit.prevent="search" class="text-center">
+      <div class="text-center">
         <input
           class="input-field"
           v-model="query"
@@ -12,8 +12,7 @@
           type="text"
           placeholder=" Nhập nội dung tìm kiếm"
         />
-        <button type="submit" hidden>Tìm kiếm</button>
-      </form>
+      </div>
       <table
         class="table table-hover table-borderless"
         v-if="users.length > 0 && query == ''"
@@ -43,8 +42,6 @@
           </tr>
         </tbody>
       </table>
-      <!-- <p v-else>Không có người dùng nào.</p> -->
-
       <table class="table table-hover table-borderless" v-if="query != ''">
         <tbody>
           <tr
@@ -147,18 +144,6 @@
               </div>
             </div>
           </div>
-          <div class="submit-dialog">
-            <button class="btn btn-primary custom-btn" @click="handleEdit">
-              Nhắn tin
-            </button>
-            &ensp;
-            <button
-              class="btn btn-secondary custom-btn"
-              @click="deleteFriend(selectedUser.uid)"
-            >
-              Xóa bạn bè
-            </button>
-          </div>
         </div>
       </div>
 
@@ -197,16 +182,23 @@ import {
 import { showErrorAlert } from "../utils/notification"; // Nếu có hàm thông báo lỗi
 import { getAuth } from "firebase/auth";
 
-// Mảng lưu danh sách tất cả người dùng
 const users = reactive([]);
-
-// Cờ để kiểm tra trạng thái loading
 const loading = ref(false);
-
 const auth = getAuth();
 const currentUser = auth.currentUser;
+const query = ref("");
+const selectedUser = ref(null);
+const myRequestList = reactive([]);
+const matchedUsers = reactive([]);
 
-// Hàm lấy danh sách tất cả người dùng từ Firebase
+const filteredUsers = computed(() => {
+  if (query.value.trim() === "") {
+    return matchedUsers;
+  }
+  const searchRegex = new RegExp(query.value.split("").join(".*"), "i");
+  return matchedUsers.filter((user) => searchRegex.test(user.displayName));
+});
+
 const getAllUsers = async () => {
   loading.value = true; // Hiển thị loading trong lúc lấy dữ liệu
   const db = getDatabase(); // Lấy instance của Firebase Realtime Database
@@ -248,33 +240,9 @@ const getAllUsers = async () => {
   }
 };
 
-// Gọi hàm khi component được mount
-getAllUsers();
-
-const query = ref("");
-const selectedUser = ref(null);
-
-// Hàm để chọn người dùng
 const selectUser = (user) => {
   selectedUser.value = user;
 };
-
-// Tạo một computed để tự động cập nhật filteredUsers khi query thay đổi
-const filteredUsers = computed(() => {
-  if (query.value.trim() === "") {
-    return matchedUsers;
-  }
-  const searchRegex = new RegExp(query.value.split("").join(".*"), "i");
-  return matchedUsers.filter((user) => searchRegex.test(user.displayName));
-});
-
-// Hàm tìm kiếm (có thể không cần thiết nếu sử dụng computed property)
-const search = () => {
-  // Không cần làm gì ở đây vì filteredUsers đã là computed property
-  console.log("Searching for:", query.value);
-};
-
-const myRequestList = reactive([]);
 
 // Hàm lấy danh sách lời mời kết bạn đã nhận
 const getMyFriendsList = async () => {
@@ -327,8 +295,6 @@ const getMyFriendsList = async () => {
   }
 };
 
-const matchedUsers = reactive([]); // Mảng để lưu danh sách các user tìm được
-
 const filterPendingUsers = () => {
   // Xóa toàn bộ phần tử của mảng bằng splice để Vue phản ứng đúng
   matchedUsers.splice(0, matchedUsers.length);
@@ -347,8 +313,6 @@ const loadFriends = async () => {
   await getMyFriendsList();
   filterPendingUsers(); // Gọi filterPendingUsers sau khi cả hai hàm trên đã hoàn thành
 };
-
-loadFriends();
 
 async function deleteFriend(id) {
   let friendId;
@@ -376,6 +340,9 @@ async function deleteFriend(id) {
     showErrorAlert("Lỗi khi xóa bạn bè: " + error.message);
   }
 }
+
+getAllUsers();
+loadFriends();
 </script>
 
 <style scoped>
