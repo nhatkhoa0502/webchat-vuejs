@@ -1,22 +1,21 @@
 <template>
-  <v-app>
-    <!-- NavigationDrawer Chỉ hiện thị khi người dùng đã đăng nhập -->
-    <NavigationDrawer v-if="user" />
-
-    <!-- Router-view cho người dùng đã đăng nhập -->
-    <v-main v-if="user">
-      <router-view />
-    </v-main>
-
-    <!-- Router-view cho người dùng chưa đăng nhập -->
-    <v-main v-else>
-      <router-view name="unAuthenticated" />
-    </v-main>
-  </v-app>
+  <div v-if="user" class="container-fluid">
+    <div class="row">
+      <div class="col-md-2 border-end">
+        <NavigationHeader />
+      </div>
+      <div class="col-md-10">
+        <router-view />
+      </div>
+    </div>
+  </div>
+  <div v-else>
+    <router-view name="unAuthenticated" />
+  </div>
 </template>
 <script setup>
 import { computed } from "vue";
-import NavigationDrawer from "./components/NavigationDrawer.vue";
+import NavigationHeader from "./components/NavigationHeader.vue";
 import { useStore } from "vuex";
 
 const store = useStore();

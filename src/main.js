@@ -2,7 +2,6 @@ import { createApp } from "vue";
 import App from "./App.vue";
 import router from "./router";
 import store from "./store";
-import vuetify from "./plugins/vuetify";
 import { initializeApp } from "firebase/app";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
@@ -23,7 +22,6 @@ const firebaseConfig = {
 initializeApp(firebaseConfig);
 
 const app = createApp(App);
-app.use(vuetify);
 app.use(store);
 app.use(router);
 app.mount("#app");
@@ -32,7 +30,6 @@ const auth = getAuth();
 
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    // User is signed in, you can save user data if needed
     store.dispatch("login", user);
     router.push("/profile");
     console.log("User login");
@@ -43,10 +40,3 @@ onAuthStateChanged(auth, (user) => {
     console.log("User logout");
   }
 });
-
-// vuex khi reload lại trang sẽ bị reset, đăng xuất khỏi firebase để đồng bộ với vuex
-// window.addEventListener("beforeunload", () => {
-//   signOut(auth).catch((error) => {
-//     console.error("Error signing out: ", error);
-//   });
-// });
