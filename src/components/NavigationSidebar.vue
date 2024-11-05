@@ -11,8 +11,11 @@
       <span class="ms-3 fw-bold">{{ displayName }}</span>
     </div>
 
+    <!-- Gạch ngang -->
+    <div class="border-top border-dark" style="height: 1px"></div>
+
     <!-- Navigation Links -->
-    <ul class="navbar-nav">
+    <ul class="navbar-nav mt-2">
       <li class="nav-item mb-2">
         <router-link
           to="/chats"
@@ -132,6 +135,6 @@ getUserData(user.value.uid)
 <style scoped>
 .nav-link.active {
   font-weight: bold; /* Tô đậm liên kết đang chọn */
-  color: #007bff; /* Thay đổi màu sắc nếu cần */
+  color: #007bff !important; /* Thay đổi màu sắc nếu cần */
 }
 </style>

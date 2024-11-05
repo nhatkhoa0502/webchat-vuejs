@@ -2,7 +2,7 @@
   <div v-if="user" class="container-fluid">
     <div class="row">
       <div class="col-md-2 border-end">
-        <NavigationHeader />
+        <NavigationSidebar />
       </div>
       <div class="col-md-10">
         <router-view />
@@ -15,7 +15,7 @@
 </template>
 <script setup>
 import { computed } from "vue";
-import NavigationHeader from "./components/NavigationHeader.vue";
+import NavigationSidebar from "./components/NavigationSidebar.vue";
 import { useStore } from "vuex";
 
 const store = useStore();
