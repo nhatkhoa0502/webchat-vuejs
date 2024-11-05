@@ -74,7 +74,7 @@
 <script setup>
 import TextMessage from "./TextMessage.vue";
 
-import { ref, computed, defineProps, onMounted, onUnmounted, watch } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useStore } from "vuex";
 import {
   getDatabase,

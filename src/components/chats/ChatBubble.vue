@@ -35,7 +35,7 @@
 </template>
 
 <script setup>
-import { computed, defineProps, onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useStore } from "vuex";
 import {
   getDatabase,
