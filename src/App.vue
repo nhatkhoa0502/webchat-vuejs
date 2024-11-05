@@ -15,7 +15,7 @@
   </v-app>
 </template>
 <script setup>
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import NavigationDrawer from "./components/NavigationDrawer.vue";
 import { useStore } from "vuex";
 

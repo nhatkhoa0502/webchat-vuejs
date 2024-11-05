@@ -108,12 +108,7 @@
 
 <script setup>
 import { ref } from "vue";
-import {
-  getAuth,
-  createUserWithEmailAndPassword,
-  sendEmailVerification,
-  signOut,
-} from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 import { showSuccessAlert, showErrorAlert } from "../utils/notification";
 import { getDatabase, ref as dbRef, set } from "firebase/database";
 

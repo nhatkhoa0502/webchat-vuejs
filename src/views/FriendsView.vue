@@ -172,13 +172,7 @@
 
 <script setup>
 import { ref, reactive, computed } from "vue";
-import {
-  getDatabase,
-  ref as dbRef,
-  get,
-  child,
-  remove,
-} from "firebase/database";
+import { getDatabase, ref as dbRef, get, child } from "firebase/database";
 import { showErrorAlert } from "../utils/notification"; // Nếu có hàm thông báo lỗi
 import { getAuth } from "firebase/auth";
 
@@ -313,33 +307,6 @@ const loadFriends = async () => {
   await getMyFriendsList();
   filterPendingUsers(); // Gọi filterPendingUsers sau khi cả hai hàm trên đã hoàn thành
 };
-
-async function deleteFriend(id) {
-  let friendId;
-
-  myRequestList.forEach((i) => {
-    if (i.uid === id) {
-      friendId = i.id;
-    }
-  });
-
-  const db = getDatabase();
-
-  try {
-    // Tạo tham chiếu tới bản ghi của người bạn dựa trên friendId
-    const friendRef = dbRef(db, `friend/${friendId}`);
-
-    // Xóa bản ghi đó
-    await remove(friendRef);
-
-    console.log("Bạn bè đã được xóa thành công.");
-    loadFriends();
-    selectedUser.value = null;
-  } catch (error) {
-    console.error("Lỗi khi xóa bạn bè:", error);
-    showErrorAlert("Lỗi khi xóa bạn bè: " + error.message);
-  }
-}
 
 getAllUsers();
 loadFriends();

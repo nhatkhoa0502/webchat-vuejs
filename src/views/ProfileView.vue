@@ -152,7 +152,7 @@
   </div>
 </template>
 <script setup>
-import { ref, computed, reactive, onMounted } from "vue";
+import { ref, computed, reactive } from "vue";
 import { getDatabase, ref as dbRef, get, set, child } from "firebase/database";
 import { useStore } from "vuex";
 import {

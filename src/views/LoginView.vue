@@ -93,7 +93,7 @@
 </template>
 <script setup>
 import { ref } from "vue";
-import { getAuth, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { showSuccessAlert, showErrorAlert } from "../utils/notification";
 
 const email = ref("");

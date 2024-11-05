@@ -53,48 +53,6 @@
     <div class="message-input bg-light">
       <div class="card">
         <div class="card-header">
-          <div class="feature-buttons d-flex align-items-center">
-            <input
-              type="file"
-              ref="fileInput"
-              @change="handleFileUpload"
-              style="display: none"
-              accept="image/*,video/*,.pdf,.doc,.docx,.txt"
-            />
-            <button
-              @click="triggerFileUpload"
-              class="btn btn-outline-primary btn-sm me-2"
-            >
-              <i class="bi bi-paperclip"></i>
-            </button>
-            <button
-              @click="isRecording ? stopRecording() : startRecording()"
-              class="btn btn-outline-primary btn-sm me-2 bounce-btn"
-            >
-              <i
-                class="bi"
-                :class="isRecording ? 'bi-stop-circle' : 'bi-mic'"
-              ></i>
-            </button>
-            <!-- Recording indicator -->
-            <div
-              v-if="isRecording"
-              class="recording-indicator d-flex align-items-center ms-2"
-            >
-              <span class="badge bg-danger me-2">Recording</span>
-              <div
-                class="spinner-grow spinner-grow-sm text-danger"
-                role="status"
-              >
-                <span class="visually-hidden">Recording...</span>
-              </div>
-            </div>
-            <button class="btn btn-outline-primary btn-sm bounce-btn">
-              <i class="bi bi-emoji-smile"></i>
-            </button>
-          </div>
-        </div>
-        <div class="card-body">
           <div class="input-group">
             <input
               v-model="newMessage"
@@ -115,45 +73,23 @@
 
 <script setup>
 import TextMessage from "./TextMessage.vue";
-import ImageMessage from "./ImageMessage.vue";
-import VideoMessage from "./VideoMessage.vue";
-import FileMessage from "./FileMessage.vue";
-import AudioMessage from "./AudioMessage.vue";
-// import SoundMessage from './SoundMessage.vue'
-import {
-  ref,
-  computed,
-  shallowRef,
-  defineProps,
-  onMounted,
-  onUnmounted,
-  watch,
-} from "vue";
+
+import { ref, computed, defineProps, onMounted, onUnmounted, watch } from "vue";
 import { useStore } from "vuex";
 import {
   getDatabase,
   push,
   get,
-  child,
   ref as dbRef,
   set,
-  onValue,
-  serverTimestamp,
   query,
-  orderByChild,
   limitToLast,
   onChildAdded,
   onChildChanged,
-  off,
   update,
   increment,
 } from "firebase/database";
-import {
-  ref as storageRef,
-  uploadBytes,
-  getDownloadURL,
-  getStorage,
-} from "firebase/storage";
+
 import { nextTick } from "vue";
 
 const props = defineProps({
@@ -171,7 +107,6 @@ const messages = ref([]);
 const newMessage = ref("");
 let mAddedChatMessageListener = null;
 let mChangedChatMessageListener = null;
-const fileInput = ref(null);
 const messageListRef = ref(null);
 const chatId = computed(() => {
   return [mCurrentUser.value?.uid, mAnotherUser.value?.uid].sort().join("_");
@@ -202,11 +137,7 @@ const formattedLastOnline = computed(() => {
   }
 });
 
-// audio recording properties
-const isRecording = ref(false);
-const audioURL = ref("");
 let mediaRecorder = null;
-let audioChunks = [];
 
 onMounted(async () => {
   // Wait for the store to be initialized
@@ -254,10 +185,6 @@ const loadAnotherUserAndChatMessages = async (selectedUserId) => {
 function getMessageComponent(type) {
   const components = {
     text: TextMessage,
-    image: ImageMessage,
-    video: VideoMessage,
-    file: FileMessage,
-    audio: AudioMessage,
   };
   return components[type] || TextMessage;
 }
@@ -426,129 +353,5 @@ const updateUserChatsData = async (updateData) => {
     dbRef(db, `user_chats/${mAnotherUser.value.uid}/${mCurrentUser.value.uid}`),
     { ...updateData, unreadCount: increment(1) }
   );
-};
-
-const triggerFileUpload = () => {
-  fileInput.value.click();
-};
-
-const handleFileUpload = async (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const storage = getStorage();
-  const fileRef = storageRef(
-    storage,
-    `chat_files/${Date.now()}_${chatId.value}_${file.name}`
-  );
-  await uploadBytes(fileRef, file);
-  const downloadURL = await getDownloadURL(fileRef);
-
-  let messageData = {
-    sender: mCurrentUser.value.uid,
-    type: "",
-    fileUrl: downloadURL,
-    fileName: file.name,
-    fileType: file.type,
-    fileSize: file.size,
-    isSeen: false,
-    timestamp: Date.now(),
-  };
-
-  if (file.type.startsWith("image/")) {
-    messageData.type = "image";
-  } else if (file.type.startsWith("video/")) {
-    messageData.type = "video";
-  } else {
-    messageData.type = "file";
-  }
-
-  sendMediaMessage(messageData);
-};
-
-const startRecording = async () => {
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    console.error("getUserMedia not supported on your browser!");
-    return;
-  }
-
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRecorder = new MediaRecorder(stream);
-
-    mediaRecorder.ondataavailable = (event) => {
-      audioChunks.push(event.data);
-    };
-
-    mediaRecorder.onstop = () => {
-      const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
-      audioURL.value = URL.createObjectURL(audioBlob);
-      console.log("audioURL: " + audioURL.value);
-      handleAudioUpload(audioBlob, audioURL.value);
-      audioChunks = [];
-      mediaRecorder.stream.getTracks().forEach((track) => track.stop());
-    };
-
-    mediaRecorder.start();
-    isRecording.value = true;
-  } catch (error) {
-    console.error(`The following getUserMedia error occurred: ${error}`);
-  }
-};
-
-const stopRecording = () => {
-  if (mediaRecorder) {
-    mediaRecorder.stop();
-    isRecording.value = false;
-  }
-};
-
-const handleAudioUpload = async (audioBlob, fileName) => {
-  const storage = getStorage();
-
-  const audioRef = storageRef(
-    storage,
-    `chat_audios/${Date.now()}_${chatId.value}_${fileName}`
-  );
-  await uploadBytes(audioRef, audioBlob);
-  const downloadURL = await getDownloadURL(audioRef);
-
-  let messageData = {
-    sender: mCurrentUser.value.uid,
-    type: "audio",
-    fileUrl: downloadURL,
-    fileName: fileName,
-    fileType: audioBlob.type,
-    fileSize: audioBlob.size,
-    isSeen: false,
-    timestamp: Date.now(),
-  };
-  sendMediaMessage(messageData);
-};
-
-const sendMediaMessage = async (messageData) => {
-  if (!mCurrentUser.value || !mAnotherUser.value) {
-    console.error("sendMediaMessage: mCurrentUser or mAnotherUser is null");
-    return;
-  }
-
-  const newMessageRef = push(chatMessagesRef.value);
-
-  if (!messageData) {
-    console.error("messageData is null");
-    return;
-  }
-
-  try {
-    await set(newMessageRef, messageData);
-    const updateData = {
-      timestamp: messageData.timestamp,
-      lastMessageKey: newMessageRef.key,
-    };
-
-    await updateUserChatsData(updateData);
-  } catch (error) {
-    console.error("Error sending media message:", error);
-  }
 };
 </script>
