@@ -1,48 +1,52 @@
 <template>
-  <div id="container_main" class="container p-3 mt-5" show>
-    <div class="row d-flex justify-content-center">
-      <div class="col-sm-5 shadow-lg rounded-5 p-3">
-        <!-- title -->
-        <h1 class="text-center text-primary my-3 text-decoration-underline">
-          Forgot Password
-        </h1>
+  <form @submit.prevent="resetPassword">
+    <div id="container_main" class="container p-3 mt-5" show>
+      <div class="row d-flex justify-content-center">
+        <div class="col-sm-5 shadow-lg rounded-5 p-3">
+          <!-- title -->
+          <h1 class="text-center text-primary my-3 text-decoration-underline">
+            Forgot Password
+          </h1>
 
-        <!-- input email -->
-        <div class="mb-3 input-group">
-          <h5 for="pwd" class="input-group form-label text-primary">Email</h5>
-          <input
-            type="text"
-            class="form-control"
-            placeholder="Enter Email"
-            v-model="email"
-          />
-        </div>
+          <!-- input email -->
+          <div class="mb-3 input-group">
+            <h5 for="pwd" class="input-group form-label text-primary">Email</h5>
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Enter Email"
+              v-model="email"
+            />
+          </div>
 
-        <!-- btn login email/password -->
-        <div class="mt-5 d-grid">
-          <button
-            @click="resetPassword"
-            class="btn btn-lg btn-primary btn-block"
-          >
-            <v-progress-circular
-              v-if="loading"
-              indeterminate
-              color="white"
-            ></v-progress-circular>
-            Submit
-          </button>
-        </div>
+          <!-- btn login email/password -->
+          <div class="mt-5 d-grid">
+            <button
+              @click="resetPassword"
+              class="btn btn-lg btn-primary btn-block"
+            >
+              <div
+                v-if="loading"
+                class="spinner-border spinner-border-sm text-white me-2"
+                role="status"
+              >
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <span v-if="!loading">Submit</span>
+            </button>
+          </div>
 
-        <!-- Sang trang Login -->
-        <div class="mt-5 text-center">
-          <span
-            >Remember your password?
-            <router-link to="/login">Login</router-link>
-          </span>
+          <!-- Sang trang Login -->
+          <div class="mt-5 text-center">
+            <span
+              >Remember your password?
+              <router-link to="/login">Login</router-link>
+            </span>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  </form>
 </template>
 <script setup>
 import { ref } from "vue";
@@ -54,7 +58,7 @@ import router from "@/router";
 const email = ref("");
 const loading = ref(false);
 
-const isTroll = true;
+const isTroll = false;
 
 const resetPassword = async () => {
   loading.value = true;

@@ -1,95 +1,82 @@
 <template>
-  <div id="container_main" class="container p-3 mt-5" show>
-    <div class="row d-flex justify-content-center">
-      <div class="col-sm-5 shadow-lg rounded-5 p-3">
-        <!-- title login -->
-        <h1 class="text-center text-primary my-3 text-decoration-underline">
-          Login
-        </h1>
+  <form @submit.prevent="handleLogin">
+    <div id="container_main" class="container p-3 mt-5" show>
+      <div class="row d-flex justify-content-center">
+        <div class="col-sm-5 shadow-lg rounded-5 p-3">
+          <!-- title login -->
+          <h1 class="text-center text-primary my-3 text-decoration-underline">
+            Login
+          </h1>
 
-        <!-- input email -->
-        <div class="mb-3 input-group">
-          <h5 for="pwd" class="input-group form-label text-primary">Email</h5>
-          <input
-            type="text"
-            class="form-control"
-            placeholder="Enter Email"
-            v-model="email"
-          />
-        </div>
-
-        <!-- input password -->
-        <div class="mb-3 input-group-lg">
-          <h5 for="pwd" class="form-label text-primary">Password</h5>
-          <div class="input-group">
+          <!-- input email -->
+          <div class="mb-3 input-group">
+            <h5 for="pwd" class="input-group form-label text-primary">Email</h5>
             <input
-              :type="showPassword ? 'text' : 'password'"
+              type="text"
               class="form-control"
-              placeholder="Enter Password"
-              v-model="password"
+              placeholder="Enter Email"
+              v-model="email"
             />
-            <!-- Button show password -->
-            <div class="input-group-append">
-              <button
-                class="btn btn-outline-secondary"
-                type="button"
-                @click="togglePasswordVisibility('password')"
-              >
-                <i
-                  :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"
-                ></i>
-              </button>
+          </div>
+
+          <!-- input password -->
+          <div class="mb-3 input-group-lg">
+            <h5 for="pwd" class="form-label text-primary">Password</h5>
+            <div class="input-group">
+              <input
+                :type="showPassword ? 'text' : 'password'"
+                class="form-control"
+                placeholder="Enter Password"
+                v-model="password"
+              />
+              <!-- Button show password -->
+              <div class="input-group-append">
+                <button
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  @click="togglePasswordVisibility('password')"
+                >
+                  <i
+                    :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"
+                  ></i>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Forgot Password link -->
-        <div class="text-end mt-2">
-          <router-link to="/forgot-password">Forgot Password?</router-link>
-        </div>
+          <!-- Forgot Password link -->
+          <div class="text-end mt-2">
+            <router-link to="/forgot-password">Forgot Password?</router-link>
+          </div>
 
-        <!-- btn login email/password -->
-        <div class="mt-3 d-grid">
-          <button @click="handleLogin" class="btn btn-lg btn-primary btn-block">
-            <v-progress-circular
-              v-if="loading"
-              indeterminate
-              color="white"
-            ></v-progress-circular>
-            Login
-          </button>
-        </div>
+          <!-- btn login email/password -->
+          <div class="mt-3 d-grid">
+            <button
+              @click="handleLogin"
+              class="btn btn-lg btn-primary btn-block"
+            >
+              <div
+                v-if="loading"
+                class="spinner-border spinner-border-sm text-white me-2"
+                role="status"
+              >
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <span v-if="!loading">Login</span>
+            </button>
+          </div>
 
-        <!-- Đường kẻ ngăn cách -->
-        <!-- <div class="divider-container">
-          <span>OR</span>
-        </div> -->
-
-        <!-- btn login with google -->
-        <!-- <div class="mt-3 d-grid">
-          <button
-            class="btn btn-lg btn-outline-primary btn-block"
-            @click="handleLoginGoogle"
-          >
-            <v-progress-circular
-              v-if="loadingLoginGoogle"
-              indeterminate
-              color="dark"
-            ></v-progress-circular>
-            <i class="fab fa-google"></i> Login With Google
-          </button>
-        </div> -->
-
-        <!-- Thêm dòng chữ Register -->
-        <div class="mt-5 text-center">
-          <span
-            >Don't have an account?
-            <router-link to="/register">Register</router-link>
-          </span>
+          <!-- Thêm dòng chữ Register -->
+          <div class="mt-5 text-center">
+            <span
+              >Don't have an account?
+              <router-link to="/register">Register</router-link>
+            </span>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  </form>
 </template>
 <script setup>
 import { ref } from "vue";
@@ -104,6 +91,7 @@ const showPassword = ref(false);
 // login email/password
 const handleLogin = async () => {
   loading.value = true; // Hiển thị spinner
+  console.log("loading 1", loading);
   try {
     const auth = getAuth();
     const userCredential = await signInWithEmailAndPassword(
@@ -118,6 +106,7 @@ const handleLogin = async () => {
     showErrorAlert("Login Failed!\n" + error.message);
   } finally {
     loading.value = false; // Ẩn spinner
+    console.log("loading 2", loading);
   }
 };
 

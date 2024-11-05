@@ -1,109 +1,112 @@
 <template>
-  <div id="container_main" class="container p-3 mt-5" show>
-    <div class="row d-flex justify-content-center">
-      <div class="col-sm-5 shadow-lg rounded-5 p-3">
-        <h1 class="text-center text-primary my-3 text-decoration-underline">
-          Register
-        </h1>
-
-        <!-- input username -->
-        <div class="mb-3 input-group">
-          <h5 for="pwd" class="input-group form-label text-primary">
-            Display Name
-          </h5>
-          <input
-            type="text"
-            class="form-control"
-            placeholder="Enter Display Name"
-            v-model="displayName"
-          />
-        </div>
-
-        <!-- input email -->
-        <div class="mb-3 input-group">
-          <h5 for="pwd" class="input-group form-label text-primary">Email</h5>
-          <input
-            type="text"
-            class="form-control"
-            placeholder="Enter Email"
-            v-model="email"
-          />
-        </div>
-
-        <!-- input password -->
-        <div class="mb-3 input-group-lg">
-          <h5 for="pwd" class="form-label text-primary">Password</h5>
-          <div class="input-group">
-            <input
-              :type="showPassword ? 'text' : 'password'"
-              class="form-control"
-              placeholder="Enter Password"
-              v-model="password"
-            />
-            <!-- Button show password -->
-            <div class="input-group-append">
-              <button
-                class="btn btn-outline-secondary"
-                type="button"
-                @click="togglePasswordVisibility('password')"
-              >
-                <i
-                  :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"
-                ></i>
-              </button>
-            </div>
-          </div>
-        </div>
-        <div class="mb-3 input-group-lg">
-          <h5 for="pwd" class="form-label text-primary">Confirm Password</h5>
-          <div class="input-group">
-            <input
-              :type="showConfirmPassword ? 'text' : 'password'"
-              class="form-control"
-              placeholder="Enter Password"
-              v-model="confirmPassword"
-            />
-            <!-- Button nằm ở cuối ô input -->
-            <div class="input-group-append">
-              <button
-                class="btn btn-outline-secondary"
-                type="button"
-                @click="togglePasswordVisibility('confirmPassword')"
-              >
-                <i
-                  :class="
-                    showConfirmPassword ? 'fas fa-eye-slash' : 'fas fa-eye'
-                  "
-                ></i>
-              </button>
-            </div>
-          </div>
-        </div>
-        <div class="mt-3 d-grid">
-          <button
-            @click="handleRegister"
-            class="btn btn-lg btn-primary btn-block"
-          >
-            <!-- Spinner -->
-            <v-progress-circular
-              v-if="loading"
-              indeterminate
-              color="white"
-            ></v-progress-circular>
+  <form @submit.prevent="handleRegister">
+    <div id="container_main" class="container p-3 mt-5" show>
+      <div class="row d-flex justify-content-center">
+        <div class="col-sm-5 shadow-lg rounded-5 p-3">
+          <h1 class="text-center text-primary my-3 text-decoration-underline">
             Register
-          </button>
-        </div>
+          </h1>
 
-        <!-- Thêm dòng chữ Login -->
-        <div class="mt-5 text-center">
-          <span
-            >You have an account?
-            <router-link to="/login">Login</router-link>
-          </span>
+          <!-- input username -->
+          <div class="mb-3 input-group">
+            <h5 for="pwd" class="input-group form-label text-primary">
+              Display Name
+            </h5>
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Enter Display Name"
+              v-model="displayName"
+            />
+          </div>
+
+          <!-- input email -->
+          <div class="mb-3 input-group">
+            <h5 for="pwd" class="input-group form-label text-primary">Email</h5>
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Enter Email"
+              v-model="email"
+            />
+          </div>
+
+          <!-- input password -->
+          <div class="mb-3 input-group-lg">
+            <h5 for="pwd" class="form-label text-primary">Password</h5>
+            <div class="input-group">
+              <input
+                :type="showPassword ? 'text' : 'password'"
+                class="form-control"
+                placeholder="Enter Password"
+                v-model="password"
+              />
+              <!-- Button show password -->
+              <div class="input-group-append">
+                <button
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  @click="togglePasswordVisibility('password')"
+                >
+                  <i
+                    :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"
+                  ></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="mb-3 input-group-lg">
+            <h5 for="pwd" class="form-label text-primary">Confirm Password</h5>
+            <div class="input-group">
+              <input
+                :type="showConfirmPassword ? 'text' : 'password'"
+                class="form-control"
+                placeholder="Enter Password"
+                v-model="confirmPassword"
+              />
+              <!-- Button nằm ở cuối ô input -->
+              <div class="input-group-append">
+                <button
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  @click="togglePasswordVisibility('confirmPassword')"
+                >
+                  <i
+                    :class="
+                      showConfirmPassword ? 'fas fa-eye-slash' : 'fas fa-eye'
+                    "
+                  ></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="mt-3 d-grid">
+            <button
+              @click="handleRegister"
+              class="btn btn-lg btn-primary btn-block"
+            >
+              <div
+                v-if="loading"
+                class="spinner-border spinner-border-sm text-white me-2"
+                role="status"
+              >
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <span v-if="!loading">Register</span>
+            </button>
+          </div>
+
+          <!-- Thêm dòng chữ Login -->
+          <div class="mt-5 text-center">
+            <span
+              >You have an account?
+              <router-link to="/login">Login</router-link>
+            </span>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  </form>
 </template>
 
 <script setup>
