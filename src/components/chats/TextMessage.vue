@@ -26,11 +26,6 @@
         }}</small>
       </div>
     </div>
-    <small
-      v-if="isCurrentUser && isLastMessageFromCurrentUser"
-      :class="['badge text-bg-secondary mt-1']"
-      >{{ isSeen ? "Seen" : "Already Sent" }}</small
-    >
   </div>
 </template>
 
@@ -42,11 +37,8 @@ const props = defineProps({
   type: String,
   content: String,
   avatar: String,
-  isSeen: Boolean,
   isCurrentUser: Boolean,
   timestamp: String,
-
-  isLastMessageFromCurrentUser: Boolean,
 });
 
 const formattedTime = computed(() => {

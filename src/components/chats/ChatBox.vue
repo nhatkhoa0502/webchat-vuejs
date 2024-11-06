@@ -14,21 +14,7 @@
         />
         <div class="d-flex flex-column mx-2">
           <h5 class="mb-0">{{ mAnotherUser?.displayName }}</h5>
-          <small class="text-muted"
-            >{{ mAnotherUser?.isOnline ? "Online" : formattedLastOnline }}
-          </small>
         </div>
-      </div>
-      <div>
-        <button class="btn btn-outline-primary me-2 bounce-btn">
-          <i class="bi bi-search"></i>
-        </button>
-        <button class="btn btn-outline-primary me-2 bounce-btn">
-          <i class="bi bi-telephone"></i>
-        </button>
-        <button class="btn btn-outline-secondary bounce-btn">
-          <i class="bi bi-info-circle"></i>
-        </button>
       </div>
     </div>
     <!-- content chatbox -->
@@ -43,9 +29,6 @@
         v-bind="message"
         :isCurrentUser="message.sender == mCurrentUser.uid"
         :avatar="mAnotherUser?.avatar"
-        :isLastMessageFromCurrentUser="
-          message.key === lastMessageFromCurrentUser?.key
-        "
       ></component>
     </div>
 
@@ -82,23 +65,15 @@ import {
   get,
   ref as dbRef,
   set,
-  query,
-  limitToLast,
   onChildAdded,
-  onChildChanged,
-  update,
-  increment,
 } from "firebase/database";
-
-import { nextTick } from "vue";
 
 const props = defineProps({
   selectedUserId: {
     type: String,
-    // default: '08EWqzrSzwgSfZlSexzaclW8Yoa2'
-    default: "4pH0Oi9TUvhRIZzy4pH7kq20pYG2",
   },
 });
+
 const storeVuex = useStore();
 const db = getDatabase();
 let mCurrentUser = ref(null);
@@ -106,7 +81,6 @@ let mAnotherUser = ref(null);
 const messages = ref([]);
 const newMessage = ref("");
 let mAddedChatMessageListener = null;
-let mChangedChatMessageListener = null;
 const messageListRef = ref(null);
 const chatId = computed(() => {
   return [mCurrentUser.value?.uid, mAnotherUser.value?.uid].sort().join("_");
@@ -114,34 +88,8 @@ const chatId = computed(() => {
 const chatMessagesRef = computed(() =>
   dbRef(db, `chat_messages/${chatId.value}`)
 );
-const lastMessageFromCurrentUser = computed(() => {
-  const reversedMessages = [...messages.value].reverse();
-  return reversedMessages.find((msg) => msg.sender === mCurrentUser.value?.uid);
-});
-
-const formattedLastOnline = computed(() => {
-  if (!mAnotherUser.value?.lastOnline) return "";
-  const date = new Date(mAnotherUser.value?.lastOnline);
-  const minusDate = (Date.now() - date.getTime()) / 1000;
-  if (minusDate < 60) {
-    return "Online";
-  } else if (minusDate < 3600) {
-    return `Online ${Math.floor(minusDate / 60)} minutes ago`;
-  } else if (minusDate < 86400) {
-    return `Online ${Math.floor(minusDate / 3600)} hours ago`;
-  } else {
-    return `Online ${date.toLocaleString([], {
-      dateStyle: "short",
-      timeStyle: "short",
-    })}`;
-  }
-});
-
-let mediaRecorder = null;
 
 onMounted(async () => {
-  // Wait for the store to be initialized
-  // await store.dispatch('initializeAuth');
   mCurrentUser.value = await getCurrentUser();
   await loadAnotherUserAndChatMessages(props.selectedUserId);
 });
@@ -149,14 +97,6 @@ onMounted(async () => {
 onUnmounted(() => {
   if (mAddedChatMessageListener) {
     mAddedChatMessageListener();
-  }
-
-  if (mChangedChatMessageListener) {
-    mChangedChatMessageListener();
-  }
-
-  if (mediaRecorder) {
-    mediaRecorder.stream.getTracks().forEach((track) => track.stop());
   }
 });
 
@@ -209,17 +149,15 @@ const loadAnotherUser = async (uid) => {
   return anotherUser;
 };
 
-const getChatMessages = async (limit = 50) => {
+const getChatMessages = async () => {
   if (!mCurrentUser.value || !mAnotherUser.value) {
     console.error("getChatMessages: mCurrentUser or mAnotherUser is null");
     return;
   }
 
-  const messagesQuery = query(chatMessagesRef.value, limitToLast(limit));
-
-  // Lấy dữ liệu ban đầu
+  // Lấy dữ liệu tin nhắn ban đầu
   try {
-    const snapshot = await get(messagesQuery);
+    const snapshot = await get(chatMessagesRef.value);
     const initialMessages = [];
     snapshot.forEach((childSnapshot) => {
       initialMessages.push({
@@ -229,8 +167,6 @@ const getChatMessages = async (limit = 50) => {
     });
 
     messages.value = initialMessages;
-    markAllMessagesAsSeen();
-    scrollToBottom();
 
     // Lắng nghe tin nhắn mới
     mAddedChatMessageListener = onChildAdded(
@@ -243,74 +179,12 @@ const getChatMessages = async (limit = 50) => {
         // Chỉ thêm tin nhắn mới nếu nó chưa có trong danh sách
         if (!messages.value.some((msg) => msg.key === newMessage.key)) {
           messages.value.push(newMessage);
-
-          if (newMessage.sender == mCurrentUser.value.uid) {
-            scrollToBottom();
-          }
-
-          if (newMessage.sender == mAnotherUser.value.uid) {
-            markMessageAsSeen(newMessage.key);
-          }
-        }
-      }
-    );
-
-    mChangedChatMessageListener = onChildChanged(
-      chatMessagesRef.value,
-      (childSnapshot) => {
-        const changedMessage = {
-          key: childSnapshot.key,
-          ...childSnapshot.val(),
-        };
-        console.log("changedMessage in child change: " + changedMessage);
-        const index = messages.value.findIndex(
-          (msg) => msg.key === changedMessage.key
-        );
-        if (index !== -1) {
-          messages.value[index] = changedMessage;
         }
       }
     );
   } catch (error) {
     console.error("Error fetching messages:", error);
   }
-};
-
-const markMessageAsSeen = async (messageKey) => {
-  const messageRef = dbRef(db, `chat_messages/${chatId.value}/${messageKey}`);
-  await update(messageRef, { isSeen: true });
-  await update(
-    dbRef(db, `user_chats/${mCurrentUser.value.uid}/${mAnotherUser.value.uid}`),
-    { unreadCount: increment(-1) }
-  );
-};
-
-const markAllMessagesAsSeen = async () => {
-  if (!mCurrentUser.value || !mAnotherUser.value) {
-    console.error("markMessageAsSeen: mCurrentUser or mAnotherUser is null");
-    return;
-  }
-
-  const unseenMessages = messages.value.filter(
-    (msg) => msg.sender === mAnotherUser.value.uid && !msg.isSeen
-  );
-
-  for (const msg of unseenMessages) {
-    const messageRef = dbRef(db, `chat_messages/${chatId.value}/${msg.key}`);
-    await update(messageRef, { isSeen: true });
-  }
-  await update(
-    dbRef(db, `user_chats/${mCurrentUser.value.uid}/${mAnotherUser.value.uid}`),
-    { unreadCount: increment(-unseenMessages.length) }
-  );
-};
-
-const scrollToBottom = () => {
-  nextTick(() => {
-    if (messageListRef.value) {
-      messageListRef.value.scrollTop = messageListRef.value.scrollHeight;
-    }
-  });
 };
 
 const sendMessage = async () => {
@@ -322,36 +196,15 @@ const sendMessage = async () => {
       content: newMessage.value,
       timestamp: Date.now(),
       sender: mCurrentUser.value.uid,
-      isSeen: false,
     };
 
     try {
       await set(newMessageRef, messageData);
 
       newMessage.value = "";
-
-      // Update last message in userChats for both users
-      const updateData = {
-        timestamp: messageData.timestamp,
-        lastMessageKey: newMessageRef.key,
-      };
-
-      await updateUserChatsData(updateData);
     } catch (error) {
       console.error("Error sending message:", error);
     }
   }
-};
-
-const updateUserChatsData = async (updateData) => {
-  await update(
-    dbRef(db, `user_chats/${mCurrentUser.value.uid}/${mAnotherUser.value.uid}`),
-    updateData
-  );
-
-  await update(
-    dbRef(db, `user_chats/${mAnotherUser.value.uid}/${mCurrentUser.value.uid}`),
-    { ...updateData, unreadCount: increment(1) }
-  );
 };
 </script>
