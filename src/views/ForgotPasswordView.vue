@@ -50,7 +50,6 @@
 </template>
 <script setup>
 import { ref } from "vue";
-import { showInfoAlert } from "../utils/notification";
 import { getAuth, sendPasswordResetEmail } from "firebase/auth";
 import { showSuccessAlert, showErrorAlert } from "../utils/notification";
 import router from "@/router";
@@ -58,24 +57,18 @@ import router from "@/router";
 const email = ref("");
 const loading = ref(false);
 
-const isTroll = false;
-
 const resetPassword = async () => {
   loading.value = true;
-  if (isTroll) {
-    showInfoAlert("Relax and try to remember your password!");
-  } else {
-    try {
-      const auth = getAuth();
-      await sendPasswordResetEmail(auth, email.value);
-      showSuccessAlert(
-        "If the email address exists in the system, you will receive a password reset email."
-      );
-      router.push("/login");
-    } catch (err) {
-      console.log("reset password fail: ", err);
-      showErrorAlert("Email address is missing.");
-    }
+  try {
+    const auth = getAuth();
+    await sendPasswordResetEmail(auth, email.value);
+    showSuccessAlert(
+      "If the email address exists in the system, you will receive a password reset email."
+    );
+    router.push("/login");
+  } catch (err) {
+    console.log("reset password fail: ", err);
+    showErrorAlert("Email address is missing.");
   }
   loading.value = false; // Ẩn spinner
 };
