@@ -246,6 +246,7 @@ const triggerFileInput = () => {
 
 // Hàm xử lý việc chọn và upload hình ảnh lên Firebase
 const uploadAvatar = async (event) => {
+  console.log(event);
   loading.value = true;
   const file = event.target.files[0];
   if (!file) return;

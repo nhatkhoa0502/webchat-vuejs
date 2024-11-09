@@ -179,8 +179,6 @@ import {
   serverTimestamp,
   remove,
   update,
-  set,
-  increment,
 } from "firebase/database";
 import { getAuth } from "firebase/auth";
 import { showErrorAlert } from "../utils/notification"; // Nếu có hàm thông báo lỗi
@@ -292,11 +290,11 @@ const acceptFriendRequest = async (fromUid) => {
         console.log("Không tìm thấy lời mời kết bạn để chấp nhận.");
       }
     }
+    updateUserChatsData(currentUser.uid, fromUid);
   } catch (error) {
     console.error("Lỗi khi chấp nhận lời mời kết bạn:", error);
     showErrorAlert("Lỗi khi chấp nhận lời mời kết bạn: " + error.message);
   }
-  initFirstMessage(currentUser.uid, fromUid);
 };
 
 // hàm thu hồi lời mời kb khi lỡ gửi lời mời kb
@@ -561,39 +559,12 @@ const loadFriends = async () => {
   filterFriends();
 };
 
-const initFirstMessage = async (myUid, anotherUid) => {
-  const chatId = [myUid, anotherUid].sort().join("_");
-  const chatMessagesRef = dbRef(db, `chat_messages/${chatId}`);
-  const newMessageRef = push(chatMessagesRef);
-
-  const messageData = {
-    type: "text",
-    content: "Hello, you just accepted my friend request",
-    timestamp: Date.now(),
-    sender: anotherUid,
-    isSeen: false,
-  };
-
-  try {
-    await set(newMessageRef, messageData);
-
-    // Update last message in userChats for both users
-    const updateData = {
-      timestamp: messageData.timestamp,
-      lastMessageKey: newMessageRef.key,
-    };
-
-    await updateUserChatsData(updateData, myUid, anotherUid);
-  } catch (error) {
-    console.error("Error sending message:", error);
-  }
-};
-
-const updateUserChatsData = async (updateData, myUid, anotherUid) => {
-  await update(dbRef(db, `user_chats/${myUid}/${anotherUid}`), updateData);
+const updateUserChatsData = async (myUid, anotherUid) => {
+  await update(dbRef(db, `user_chats/${myUid}/${anotherUid}`), {
+    key: "value",
+  });
   await update(dbRef(db, `user_chats/${anotherUid}/${myUid}`), {
-    ...updateData,
-    unreadCount: increment(1),
+    key: "value",
   });
 };
 

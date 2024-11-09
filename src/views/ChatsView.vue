@@ -56,6 +56,7 @@ const fetchChatBubbleList = async () => {
   }
 
   const chatsRef = dbRef(db, `user_chats/${mCurrentUser.value?.uid}`);
+
   const snapshot = await get(chatsRef);
   if (snapshot.exists()) {
     const users = [];
