@@ -29,6 +29,7 @@ import ChatBubble from "@/components/chats/ChatBubble.vue";
 import { ref, onMounted } from "vue";
 import { useStore } from "vuex";
 import { getDatabase, get, ref as dbRef } from "firebase/database";
+import { showErrorAlert } from "../utils/notification";
 
 const db = getDatabase();
 const storeVuex = useStore();
@@ -36,44 +37,30 @@ let mCurrentUser = ref(null);
 let mUsers = ref([]);
 let selectedUserId = ref(null);
 
+onMounted(async () => {
+  mCurrentUser.value = storeVuex.getters.getUser;
+  await fetchChatBubbleList();
+});
+
 const selectChat = (userId) => {
   selectedUserId.value = userId;
 };
 
-onMounted(async () => {
-  mCurrentUser.value = await getCurrentUser();
-  await fetchChatBubbleList();
-});
-
-const getCurrentUser = async () => {
-  return storeVuex.getters.getUser;
-};
-
 const fetchChatBubbleList = async () => {
-  if (!mCurrentUser.value) {
-    console.error("fetchChatBubbleList: mCurrentUser is null!");
-    return;
-  }
-
-  const chatsRef = dbRef(db, `user_chats/${mCurrentUser.value?.uid}`);
-
-  const snapshot = await get(chatsRef);
-  if (snapshot.exists()) {
-    const users = [];
-    for (const [userId] of Object.entries(snapshot.val())) {
-      const userSnapshot = await get(dbRef(db, `users/${userId}`));
-      if (userSnapshot.exists()) {
-        users.push({
-          ...userSnapshot.val(),
-        });
-      }
+  try {
+    const usersRef = dbRef(db, `users`);
+    const snapshot = await get(usersRef);
+    if (snapshot.exists()) {
+      const users = [];
+      snapshot.forEach((childSnapshot) => {
+        if (childSnapshot.key !== mCurrentUser.value.uid)
+          users.push(childSnapshot.val());
+      });
+      mUsers.value = users;
+      console.log("users: ", users);
     }
-
-    mUsers.value = users;
-  } else {
-    console.error(
-      "fetchChatBubbleList: No data available when fetching chat bubble list"
-    );
+  } catch (error) {
+    showErrorAlert("Error: " + error);
   }
 };
 </script>

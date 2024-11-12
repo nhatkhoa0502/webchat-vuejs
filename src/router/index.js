@@ -2,9 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import RegisterView from "../views/RegisterView.vue";
 import LoginView from "../views/LoginView.vue";
 import ChatsView from "../views/ChatsView.vue";
-import FriendsView from "../views/FriendsView.vue";
 import Profile from "../views/ProfileView.vue";
-import UsersView from "../views/UsersView.vue";
 import ForgotPasswordView from "../views/ForgotPasswordView.vue";
 
 const routes = [
@@ -13,16 +11,8 @@ const routes = [
     component: ChatsView,
   },
   {
-    path: "/friends",
-    component: FriendsView,
-  },
-  {
     path: "/profile",
     component: Profile,
-  },
-  {
-    path: "/users",
-    component: UsersView,
   },
   {
     path: "/forgot-password",

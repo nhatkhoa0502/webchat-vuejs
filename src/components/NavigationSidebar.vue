@@ -29,28 +29,6 @@
       </li>
       <li class="nav-item mb-2">
         <router-link
-          to="/friends"
-          :class="[
-            'nav-link text-center',
-            { active: $route.path === '/friends' },
-          ]"
-        >
-          <i class="mdi mdi-account-multiple-check-outline me-2"></i> Friend
-        </router-link>
-      </li>
-      <li class="nav-item mb-2">
-        <router-link
-          to="/users"
-          :class="[
-            'nav-link text-center',
-            { active: $route.path === '/users' },
-          ]"
-        >
-          <i class="mdi mdi-account-group-outline me-2"></i> User
-        </router-link>
-      </li>
-      <li class="nav-item mb-2">
-        <router-link
           to="/profile"
           :class="[
             'nav-link text-center',
