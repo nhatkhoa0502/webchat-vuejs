@@ -166,8 +166,8 @@ import { showSuccessAlert, showErrorAlert } from "../utils/notification";
 const isEditing = ref(false);
 const profile = reactive({
   uid: "123456789",
-  email: "khoa@example.com",
-  displayName: "Nguyễn Nhật Khoa",
+  email: "test@example.com",
+  displayName: "Display Name",
   avatar:
     "https://firebasestorage.googleapis.com/v0/b/webchat-24af1.appspot.com/o/avatar-user%2Fuser-profile-icon-free-vector.jpg?alt=media&token=d75dc0a3-8183-4d22-a4a8-07b9f4599487",
   gender: "male",

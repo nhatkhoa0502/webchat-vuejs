@@ -51,10 +51,7 @@
 
           <!-- btn login email/password -->
           <div class="mt-3 d-grid">
-            <button
-              @click="handleLogin"
-              class="btn btn-lg btn-primary btn-block"
-            >
+            <button type="submit" class="btn btn-lg btn-primary btn-block">
               <div
                 v-if="loading"
                 class="spinner-border spinner-border-sm text-white me-2"
