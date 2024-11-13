@@ -11,6 +11,7 @@
         width="50"
         height="50"
         :alt="user?.displayName"
+        style="object-fit: cover"
       />
     </div>
     <div class="chat-info flex-grow-1">

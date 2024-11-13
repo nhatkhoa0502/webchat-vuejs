@@ -11,6 +11,7 @@
           width="40"
           height="40"
           alt="Avatar"
+          style="object-fit: cover"
         />
         <div class="d-flex flex-column mx-2">
           <h5 class="mb-0">{{ mAnotherUser?.displayName }}</h5>

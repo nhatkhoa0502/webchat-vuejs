@@ -5,7 +5,7 @@
       <img
         :src="avatar"
         alt="avatar"
-        style="width: 40px; height: 40px"
+        style="width: 40px; height: 40px; object-fit: cover"
         class="rounded-circle"
       />
       <span class="ms-3 fw-bold">{{ displayName }}</span>
