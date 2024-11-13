@@ -108,7 +108,11 @@
 
 <script setup>
 import { ref } from "vue";
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signOut,
+} from "firebase/auth";
 import { showSuccessAlert, showErrorAlert } from "../utils/notification";
 import { getDatabase, ref as dbRef, set } from "firebase/database";
 
@@ -141,13 +145,15 @@ const handleRegister = async () => {
       email.value,
       password.value
     );
+    await signOut(auth);
+
     const user = userCredential.user;
 
     showSuccessAlert("Register Successfully!");
     console.log("Register Successfully!", user);
 
     const db = getDatabase();
-    set(dbRef(db, "users/" + user.uid), {
+    await set(dbRef(db, "users/" + user.uid), {
       uid: user.uid,
       email: user.email,
       displayName: displayName.value,

@@ -30,13 +30,17 @@ const auth = getAuth();
 
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    store.dispatch("login", user);
+    let path = router.currentRoute.value.path;
+    console.log("path: ", path);
+
+    // User is signed in
     router.push("/profile");
+    store.dispatch("login", user);
     console.log("User login");
   } else {
     // User is signed out
-    store.dispatch("logout");
     router.push("/login");
+    store.dispatch("logout");
     console.log("User logout");
   }
 });
