@@ -53,7 +53,6 @@
 <script setup>
 import { ref, computed } from "vue";
 import { getAuth, signOut } from "firebase/auth";
-import router from "@/router";
 import { showSuccessAlert, showErrorAlert } from "../utils/notification";
 import { useStore } from "vuex";
 import { getDatabase, ref as dbRef, get, child } from "firebase/database";
@@ -68,7 +67,6 @@ const handleLogout = async () => {
   try {
     await signOut(auth);
     showSuccessAlert("User signed out successfully");
-    router.push("/login");
   } catch (error) {
     showErrorAlert("Error signing out");
     console.error("Error signing out:", error);
