@@ -17,7 +17,8 @@
       <div
         :class="[
           'rounded p-2 max-width-70',
-          props.isCurrentUser ? 'bg-primary text-white' : 'bg-secondary-subtle',
+          'bg-primary',
+          props.isCurrentUser ? props.color : 'bg-secondary-subtle',
         ]"
       >
         <p class="mb-0">{{ content }}</p>
@@ -39,6 +40,7 @@ const props = defineProps({
   avatar: String,
   isCurrentUser: Boolean,
   timestamp: String,
+  color: String,
 });
 
 const formattedTime = computed(() => {

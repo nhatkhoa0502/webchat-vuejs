@@ -17,8 +17,21 @@
         </div>
       </div>
 
-      <!-- Khu vực chat chính -->
-      <ChatBox :selectedUserId="selectedUserId" class="col-md-8 p-0 h-100" />
+      <div class="row g-3 col-md-8 p-0 h-100">
+        <!-- Mỗi màu là một cột -->
+        <div
+          v-for="color in colorList"
+          :key="color"
+          class="col-1 d-flex justify-content-center"
+        >
+          <ChatColor :color="color" @select="selectColor" />
+        </div>
+        <!-- Khu vực chat chính -->
+        <ChatBox
+          :selectedUserId="selectedUserId"
+          :selectedColor="selectedColor"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -26,6 +39,7 @@
 <script setup>
 import ChatBox from "@/components/chats/ChatBox.vue";
 import ChatBubble from "@/components/chats/ChatBubble.vue";
+import ChatColor from "@/components/chats/ChatColor.vue";
 import { ref, onMounted } from "vue";
 import { useStore } from "vuex";
 import { getDatabase, get, ref as dbRef } from "firebase/database";
@@ -36,6 +50,12 @@ const storeVuex = useStore();
 let mCurrentUser = ref(null);
 let mUsers = ref([]);
 let selectedUserId = ref(null);
+let selectedColor = ref(null);
+const colorList = ref([
+  "bg-success text-white",
+  "bg-danger text-white",
+  "bg-dark text-white",
+]);
 
 onMounted(async () => {
   mCurrentUser.value = storeVuex.getters.getUser;
@@ -44,6 +64,9 @@ onMounted(async () => {
 
 const selectChat = (userId) => {
   selectedUserId.value = userId;
+};
+const selectColor = (c) => {
+  selectedColor.value = c;
 };
 
 const fetchChatBubbleList = async () => {

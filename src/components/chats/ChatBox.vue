@@ -30,6 +30,7 @@
         v-bind="message"
         :isCurrentUser="message.sender == mCurrentUser.uid"
         :avatar="mAnotherUser?.avatar"
+        :color="$props.selectedColor"
       ></component>
     </div>
 
@@ -73,8 +74,8 @@ const props = defineProps({
   selectedUserId: {
     type: String,
   },
+  selectedColor: { type: String },
 });
-
 const storeVuex = useStore();
 const db = getDatabase();
 let mCurrentUser = ref(null);
